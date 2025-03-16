@@ -230,7 +230,6 @@ const InferencePage = () => {
             <MotionPaper
               elevation={1}
               sx={{
-                height: "100%",
                 borderRadius: 3,
                 overflow: "hidden",
               }}
@@ -257,19 +256,23 @@ const InferencePage = () => {
                 }
                 sx={{
                   bgcolor: "background.default",
-                  borderBottom: "1px solid",
+                  borderBottom: expandedSettings ? "1px solid" : "none",
                   borderColor: "divider",
                 }}
               />
 
               <Collapse in={expandedSettings} timeout="auto" unmountOnExit>
-                <CardContent sx={{ p: 3 }}>
-                  <Typography variant="body2" color="text.secondary" paragraph>
+                <CardContent sx={{ p: 3, pb: 2 }}>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ mb: 2 }}
+                  >
                     Adjust parameters to control the scene graph generation
                     process.
                   </Typography>
 
-                  <Stack spacing={4} sx={{ mt: 3 }}>
+                  <Stack spacing={3} sx={{ mt: 2 }}>
                     {/* Confidence Threshold Slider */}
                     <Box>
                       <Box
@@ -335,7 +338,7 @@ const InferencePage = () => {
                     </Box>
 
                     {/* Use Fixed Boxes Switch */}
-                    <Box>
+                    <Box sx={{ mb: 0 }}>
                       <Box sx={{ display: "flex", alignItems: "center" }}>
                         <FormControlLabel
                           control={
@@ -357,58 +360,6 @@ const InferencePage = () => {
                           </IconButton>
                         </Tooltip>
                       </Box>
-                    </Box>
-
-                    {/* Predefined Paths */}
-                    <Box>
-                      <Typography variant="subtitle2" gutterBottom>
-                        Model Information
-                      </Typography>
-                      <Paper
-                        variant="outlined"
-                        sx={{
-                          p: 2,
-                          bgcolor: "rgba(0, 0, 0, 0.02)",
-                          borderRadius: 2,
-                        }}
-                      >
-                        <Stack spacing={1}>
-                          <Box
-                            sx={{ display: "flex", alignItems: "flex-start" }}
-                          >
-                            <InfoOutlinedIcon
-                              fontSize="small"
-                              sx={{ mr: 1, color: "text.secondary", mt: 0.3 }}
-                            />
-                            <Typography variant="body2" color="text.secondary">
-                              <strong>Model Path:</strong> app/models/model.pth
-                            </Typography>
-                          </Box>
-                          <Box
-                            sx={{ display: "flex", alignItems: "flex-start" }}
-                          >
-                            <InfoOutlinedIcon
-                              fontSize="small"
-                              sx={{ mr: 1, color: "text.secondary", mt: 0.3 }}
-                            />
-                            <Typography variant="body2" color="text.secondary">
-                              <strong>Vocabulary Path:</strong>{" "}
-                              app/models/vocabulary.json
-                            </Typography>
-                          </Box>
-                          <Box
-                            sx={{ display: "flex", alignItems: "flex-start" }}
-                          >
-                            <InfoOutlinedIcon
-                              fontSize="small"
-                              sx={{ mr: 1, color: "text.secondary", mt: 0.3 }}
-                            />
-                            <Typography variant="body2" color="text.secondary">
-                              <strong>Output Path:</strong> outputs/{"{job_id}"}
-                            </Typography>
-                          </Box>
-                        </Stack>
-                      </Paper>
                     </Box>
                   </Stack>
                 </CardContent>
