@@ -21,7 +21,6 @@ import {
 import { Link as RouterLink, useLocation } from "react-router-dom";
 import MenuIcon from "@mui/icons-material/Menu";
 import AccountTreeIcon from "@mui/icons-material/AccountTree";
-import LightModeIcon from "@mui/icons-material/LightMode";
 import GitHubIcon from "@mui/icons-material/GitHub";
 import { motion } from "framer-motion";
 
@@ -258,17 +257,6 @@ const Navbar = () => {
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5, delay: 0.3 }}
             >
-              <IconButton
-                color="primary"
-                aria-label="light mode"
-                sx={{
-                  bgcolor: "rgba(63, 81, 181, 0.08)",
-                  "&:hover": { bgcolor: "rgba(63, 81, 181, 0.15)" },
-                }}
-              >
-                <LightModeIcon />
-              </IconButton>
-
               <IconButton
                 color="inherit"
                 aria-label="github"

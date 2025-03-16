@@ -1,9 +1,8 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import {
   Box,
   Typography,
   Button,
-  Paper,
   useTheme,
   IconButton,
   Tooltip,
@@ -88,19 +87,13 @@ const FileUploader = ({
   const [preview, setPreview] = useState("");
   const [fileError, setFileError] = useState("");
   const [loading, setLoading] = useState(false);
+  const fileInputRef = useRef(null);
 
-  // Handle file drop
-  const onDrop = useCallback(
-    (acceptedFiles) => {
+  // Process a file after it's selected
+  const processFile = useCallback(
+    (selectedFile) => {
+      // Reset error state
       setFileError("");
-      setLoading(true);
-
-      if (acceptedFiles.length === 0) {
-        setLoading(false);
-        return;
-      }
-
-      const selectedFile = acceptedFiles[0];
 
       // Check file size
       if (selectedFile.size > maxSize) {
@@ -109,32 +102,48 @@ const FileUploader = ({
             maxSize / (1024 * 1024)
           )}MB`
         );
-        setLoading(false);
         return;
       }
 
       // Create preview
       const objectUrl = URL.createObjectURL(selectedFile);
       setPreview(objectUrl);
+      setFile(selectedFile);
 
-      // Set file with a small delay to show loading
-      setTimeout(() => {
-        setFile(selectedFile);
-        setLoading(false);
-
-        // Notify parent component
-        if (onFileSelect) {
-          onFileSelect(selectedFile);
-        }
-      }, 800);
-
-      // Clean up the preview URL when component unmounts
-      return () => URL.revokeObjectURL(objectUrl);
+      // Notify parent component
+      if (onFileSelect) {
+        onFileSelect(selectedFile);
+      }
     },
     [maxSize, onFileSelect]
   );
 
-  // Clean up on unmount
+  // Handle file drop from dropzone
+  const onDrop = useCallback(
+    (acceptedFiles) => {
+      if (acceptedFiles.length > 0) {
+        processFile(acceptedFiles[0]);
+      }
+    },
+    [processFile]
+  );
+
+  // Handle file selection from the input
+  const handleFileChange = (event) => {
+    if (event.target.files && event.target.files[0]) {
+      processFile(event.target.files[0]);
+    }
+  };
+
+  // Handle manual browse button click
+  const handleBrowseClick = (e) => {
+    e.stopPropagation(); // Prevent event bubbling
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  // Clean up on unmount or when preview changes
   useEffect(() => {
     return () => {
       if (preview) {
@@ -143,18 +152,22 @@ const FileUploader = ({
     };
   }, [preview]);
 
-  // Initialize the file uploader with React-Dropzone
-  const { getRootProps, getInputProps, isDragActive, isDragReject, open } =
+  // Initialize dropzone
+  const { getRootProps, getInputProps, isDragActive, isDragReject } =
     useDropzone({
       onDrop,
       accept: acceptedTypes,
       maxFiles: 1,
-      noClick: file !== null,
-      noKeyboard: file !== null,
+      noClick: !!file, // Disable click to open when file exists
+      disabled: !!file, // Disable dropzone when file exists
     });
 
+  // Handle file removal
   const handleRemoveFile = (e) => {
     e.stopPropagation();
+    if (preview) {
+      URL.revokeObjectURL(preview);
+    }
     setFile(null);
     setPreview("");
     setFileError("");
@@ -162,6 +175,14 @@ const FileUploader = ({
     // Notify parent component
     if (onFileSelect) {
       onFileSelect(null);
+    }
+  };
+
+  // Handle change file
+  const handleChangeFile = (e) => {
+    e.stopPropagation();
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
     }
   };
 
@@ -176,204 +197,204 @@ const FileUploader = ({
 
   return (
     <Box sx={{ width: "100%" }}>
-      <UploadBox
-        {...getRootProps()}
-        isDragActive={isDragActive}
-        isDragReject={isDragReject}
-        hasFile={!!file}
-      >
-        <input {...getInputProps()} />
+      {/* Hidden direct file input for more direct control */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".jpeg,.jpg,.png,.webp,image/*"
+        onChange={handleFileChange}
+        style={{ display: "none" }}
+      />
 
-        <AnimatePresence mode="wait">
-          {loading ? (
-            <motion.div
-              key="loading"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              style={{
+      {file ? (
+        // File preview when a file is selected
+        <Box
+          sx={{
+            borderWidth: 2,
+            borderRadius: 16,
+            borderColor: theme.palette.success.main,
+            borderStyle: "dashed",
+            backgroundColor: "rgba(76, 175, 80, 0.04)",
+            padding: theme.spacing(3),
+            minHeight: 220,
+          }}
+        >
+          <motion.div
+            key="preview"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            transition={{ type: "spring", stiffness: 300, damping: 20 }}
+            style={{ width: "100%", height: "100%", position: "relative" }}
+          >
+            <Box
+              sx={{
+                position: "relative",
+                height: "100%",
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
-                justifyContent: "center",
-                height: "100%",
               }}
             >
-              <CircularProgress size={40} thickness={4} />
-              <Typography variant="body2" sx={{ mt: 2 }}>
-                Processing...
-              </Typography>
-            </motion.div>
-          ) : file ? (
-            <motion.div
-              key="preview"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              transition={{ type: "spring", stiffness: 300, damping: 20 }}
-              style={{ width: "100%", height: "100%", position: "relative" }}
-            >
+              <PreviewContainer>
+                <PreviewImage src={preview} alt="Preview" />
+              </PreviewContainer>
+
               <Box
                 sx={{
-                  position: "relative",
-                  height: "100%",
                   display: "flex",
-                  flexDirection: "column",
+                  justifyContent: "space-between",
                   alignItems: "center",
+                  width: "100%",
+                  mt: 2,
+                  bgcolor: "background.default",
+                  p: 1.5,
+                  borderRadius: 2,
                 }}
               >
-                <PreviewContainer>
-                  <PreviewImage src={preview} alt="Preview" />
-                </PreviewContainer>
-
-                <Box
-                  sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    width: "100%",
-                    mt: 2,
-                    bgcolor: "background.default",
-                    p: 1.5,
-                    borderRadius: 2,
-                  }}
-                >
-                  <Box sx={{ display: "flex", alignItems: "center" }}>
-                    <InsertDriveFileOutlinedIcon
-                      color="primary"
-                      sx={{ mr: 1, fontSize: 20 }}
-                    />
-                    <Box>
-                      <Typography
-                        variant="body2"
-                        fontWeight={500}
-                        noWrap
-                        sx={{ maxWidth: 200 }}
-                      >
-                        {file.name}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {formatFileSize(file.size)}
-                      </Typography>
-                    </Box>
-                  </Box>
-
+                <Box sx={{ display: "flex", alignItems: "center" }}>
+                  <InsertDriveFileOutlinedIcon
+                    color="primary"
+                    sx={{ mr: 1, fontSize: 20 }}
+                  />
                   <Box>
-                    <Tooltip title="Remove file">
-                      <IconButton
-                        size="small"
-                        onClick={handleRemoveFile}
-                        sx={{
-                          bgcolor: "error.light",
-                          color: "white",
-                          "&:hover": { bgcolor: "error.main" },
-                        }}
-                      >
-                        <DeleteOutlineIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Change file">
-                      <IconButton
-                        size="small"
-                        onClick={open}
-                        sx={{
-                          ml: 1,
-                          bgcolor: "primary.light",
-                          color: "white",
-                          "&:hover": { bgcolor: "primary.main" },
-                        }}
-                      >
-                        <AddPhotoAlternateIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
+                    <Typography
+                      variant="body2"
+                      fontWeight={500}
+                      noWrap
+                      sx={{ maxWidth: 200 }}
+                    >
+                      {file.name}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {formatFileSize(file.size)}
+                    </Typography>
                   </Box>
                 </Box>
+
+                <Box>
+                  <Tooltip title="Remove file">
+                    <IconButton
+                      size="small"
+                      onClick={handleRemoveFile}
+                      sx={{
+                        bgcolor: "error.light",
+                        color: "white",
+                        "&:hover": { bgcolor: "error.main" },
+                      }}
+                    >
+                      <DeleteOutlineIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="Change file">
+                    <IconButton
+                      size="small"
+                      onClick={handleChangeFile}
+                      sx={{
+                        ml: 1,
+                        bgcolor: "primary.light",
+                        color: "white",
+                        "&:hover": { bgcolor: "primary.main" },
+                      }}
+                    >
+                      <AddPhotoAlternateIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
               </Box>
-            </motion.div>
-          ) : (
-            <motion.div
-              key="upload"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              style={{
+            </Box>
+          </motion.div>
+        </Box>
+      ) : (
+        // Dropzone when no file is selected
+        <UploadBox
+          {...getRootProps()}
+          isDragActive={isDragActive}
+          isDragReject={isDragReject}
+          hasFile={false}
+        >
+          <input {...getInputProps()} />
+          <motion.div
+            key="upload"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              height: "100%",
+            }}
+          >
+            <Box
+              sx={{
+                width: 80,
+                height: 80,
+                borderRadius: "50%",
+                bgcolor: "primary.light",
+                color: "white",
                 display: "flex",
-                flexDirection: "column",
                 alignItems: "center",
                 justifyContent: "center",
-                height: "100%",
+                mb: 2,
+                boxShadow: "0 8px 20px rgba(63, 81, 181, 0.2)",
+                backgroundImage:
+                  "linear-gradient(135deg, #3f51b5 0%, #5c6bc0 100%)",
+              }}
+              component={motion.div}
+              animate={{
+                y: [0, -10, 0],
+                scale: [1, 1.05, 1],
+              }}
+              transition={{
+                repeat: Infinity,
+                duration: 3,
+                ease: "easeInOut",
               }}
             >
-              <Box
-                sx={{
-                  width: 80,
-                  height: 80,
-                  borderRadius: "50%",
-                  bgcolor: "primary.light",
-                  color: "white",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  mb: 2,
-                  boxShadow: "0 8px 20px rgba(63, 81, 181, 0.2)",
-                  backgroundImage:
-                    "linear-gradient(135deg, #3f51b5 0%, #5c6bc0 100%)",
-                }}
-                component={motion.div}
-                animate={{
-                  y: [0, -10, 0],
-                  scale: [1, 1.05, 1],
-                }}
-                transition={{
-                  repeat: Infinity,
-                  duration: 3,
-                  ease: "easeInOut",
-                }}
-              >
-                <CloudUploadIcon sx={{ fontSize: 40 }} />
-              </Box>
+              <CloudUploadIcon sx={{ fontSize: 40 }} />
+            </Box>
 
-              <Typography
-                variant="body1"
-                gutterBottom
-                align="center"
-                fontWeight={500}
-              >
-                Drag & drop your image here
-              </Typography>
+            <Typography
+              variant="body1"
+              gutterBottom
+              align="center"
+              fontWeight={500}
+            >
+              Drag & drop your image here
+            </Typography>
 
-              <Typography
-                variant="body2"
-                color="text.secondary"
-                align="center"
-                sx={{ mb: 2 }}
-              >
-                - OR -
-              </Typography>
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              align="center"
+              sx={{ mb: 2 }}
+            >
+              - OR -
+            </Typography>
 
-              <Button
-                variant="contained"
-                onClick={open}
-                startIcon={<AddPhotoAlternateIcon />}
-              >
-                Browse Files
-              </Button>
+            <Button
+              variant="contained"
+              onClick={handleBrowseClick}
+              startIcon={<AddPhotoAlternateIcon />}
+            >
+              Browse Files
+            </Button>
 
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                align="center"
-                sx={{ mt: 2 }}
-              >
-                Supported formats: JPEG, PNG, WebP (Max{" "}
-                {Math.round(maxSize / (1024 * 1024))}MB)
-              </Typography>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </UploadBox>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              align="center"
+              sx={{ mt: 2 }}
+            >
+              Supported formats: JPEG, PNG, WebP (Max{" "}
+              {Math.round(maxSize / (1024 * 1024))}MB)
+            </Typography>
+          </motion.div>
+        </UploadBox>
+      )}
 
       <Fade in={!!fileError}>
         <Typography
