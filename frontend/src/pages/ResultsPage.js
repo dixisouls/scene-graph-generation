@@ -132,6 +132,8 @@ const ImageWithFallback = ({ src, alt, ...props }) => {
           objectFit: "contain",
           transition: "opacity 0.3s",
           opacity: loading ? 0.3 : 1,
+          maxWidth: "100%",
+          maxHeight: "400px", // Reasonable max height that won't stretch the container too much
         }}
         {...props}
       />
@@ -375,7 +377,7 @@ const ResultCard = ({ title, imageUrl, icon, onView, children }) => {
         </Box>
       </Box>
 
-      <Box sx={{ p: 2, flexGrow: 1 }}>{children}</Box>
+      <Box sx={{ p: 2, flexGrow: 1, overflow: "auto" }}>{children}</Box>
 
       <Box
         sx={{
@@ -788,7 +790,7 @@ const ResultsPage = () => {
                       confidence scores.
                     </Typography>
 
-                    <Box sx={{ mt: 2 }}>
+                    <Box sx={{ mt: 2, maxHeight: 200, overflow: "auto" }}>
                       <Grid container spacing={1}>
                         {results?.objects?.slice(0, 4).map((obj, i) => (
                           <Grid item key={i}>
@@ -837,7 +839,7 @@ const ResultsPage = () => {
                       within the scene.
                     </Typography>
 
-                    <Box sx={{ mt: 2 }}>
+                    <Box sx={{ mt: 2, maxHeight: 200, overflow: "auto" }}>
                       <Grid container spacing={1}>
                         {results?.relationships?.slice(0, 3).map((rel, i) => (
                           <Grid item key={i} xs={12}>
@@ -942,6 +944,7 @@ const ResultsPage = () => {
                         boxShadow: "0 4px 20px rgba(63, 81, 181, 0.2)",
                         backgroundImage:
                           "linear-gradient(135deg, #3f51b5 0%, #5c6bc0 100%)",
+                        overflow: "auto",
                       }}
                     >
                       <Typography variant="h3" fontWeight={700}>
@@ -962,6 +965,7 @@ const ResultsPage = () => {
                         boxShadow: "0 4px 20px rgba(245, 0, 87, 0.2)",
                         backgroundImage:
                           "linear-gradient(135deg, #f50057 0%, #ff4081 100%)",
+                        overflow: "auto",
                       }}
                     >
                       <Typography variant="h3" fontWeight={700}>
@@ -982,6 +986,7 @@ const ResultsPage = () => {
                         bgcolor: theme.palette.success.light,
                         backgroundImage:
                           "linear-gradient(135deg, #388e3c 0%, #66bb6a 100%)",
+                        overflow: "auto",
                       }}
                     >
                       <Typography variant="h3" fontWeight={700}>
@@ -1004,6 +1009,7 @@ const ResultsPage = () => {
                         bgcolor: theme.palette.info.light,
                         backgroundImage:
                           "linear-gradient(135deg, #0288d1 0%, #29b6f6 100%)",
+                        overflow: "auto",
                       }}
                     >
                       <Typography variant="h3" fontWeight={700}>
@@ -1025,6 +1031,10 @@ const ResultsPage = () => {
                     data={formatObjectsForDisplay()}
                     title="Detected Objects"
                     emptyMessage="No objects detected"
+                    sx={{
+                      maxHeight: 350,
+                      overflow: "auto",
+                    }}
                   />
                 </Grid>
 
@@ -1033,6 +1043,10 @@ const ResultsPage = () => {
                     data={formatRelationshipsForDisplay()}
                     title="Detected Relationships"
                     emptyMessage="No relationships detected"
+                    sx={{
+                      maxHeight: 350,
+                      overflow: "auto",
+                    }}
                   />
                 </Grid>
               </Grid>
@@ -1049,18 +1063,23 @@ const ResultsPage = () => {
                 sx={{
                   borderRadius: 3,
                   overflow: "hidden",
-                  height: "100%",
                   display: "flex",
                   flexDirection: "column",
                 }}
               >
                 <Box
-                  sx={{ p: 0, flexGrow: 1, height: 600, position: "relative" }}
+                  sx={{
+                    p: 0,
+                    flexGrow: 1,
+                    position: "relative",
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                  }}
                 >
                   <ImageWithFallback
                     src={results?.annotated_image_url}
                     alt="Object Detection"
-                    height="100%"
                     sx={{ cursor: "pointer" }}
                     onClick={() =>
                       handleOpenModal(
@@ -1119,11 +1138,15 @@ const ResultsPage = () => {
             </Grid>
 
             <Grid item xs={12} md={4}>
-              <Stack spacing={3} sx={{ height: "100%" }}>
+              <Stack spacing={3}>
                 <ConfidenceBarGroup
                   data={formatObjectsForDisplay()}
                   title="Detected Objects"
                   emptyMessage="No objects detected"
+                  sx={{
+                    maxHeight: 350,
+                    overflow: "auto",
+                  }}
                 />
 
                 <Card
@@ -1131,10 +1154,15 @@ const ResultsPage = () => {
                   sx={{
                     borderRadius: 3,
                     overflow: "hidden",
-                    flexGrow: 1,
+                    display: "flex",
+                    flexDirection: "column",
+                    height: "100%",
+                    minHeight: 350, // Minimum height to ensure consistency
                   }}
                 >
-                  <CardContent sx={{ p: 0 }}>
+                  <CardContent
+                    sx={{ p: 0, display: "flex", flexDirection: "column" }}
+                  >
                     <Box
                       sx={{
                         p: 3,
@@ -1151,7 +1179,14 @@ const ResultsPage = () => {
                       </Typography>
                     </Box>
 
-                    <Box sx={{ p: 3 }}>
+                    <Box
+                      sx={{
+                        p: 3,
+                        overflow: "auto",
+                        flexGrow: 1,
+                        maxHeight: 350,
+                      }}
+                    >
                       <Grid container spacing={1.5}>
                         {results?.objects &&
                           results.objects.map((obj, i) => (
@@ -1253,18 +1288,23 @@ const ResultsPage = () => {
                 sx={{
                   borderRadius: 3,
                   overflow: "hidden",
-                  height: "100%",
                   display: "flex",
                   flexDirection: "column",
                 }}
               >
                 <Box
-                  sx={{ p: 0, flexGrow: 1, height: 600, position: "relative" }}
+                  sx={{
+                    p: 0,
+                    flexGrow: 1,
+                    position: "relative",
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                  }}
                 >
                   <ImageWithFallback
                     src={results?.graph_url}
                     alt="Scene Graph"
-                    height="100%"
                     sx={{ cursor: "pointer" }}
                     onClick={() =>
                       handleOpenModal(results?.graph_url, "Scene Graph")
@@ -1317,11 +1357,15 @@ const ResultsPage = () => {
             </Grid>
 
             <Grid item xs={12} md={4}>
-              <Stack spacing={3} sx={{ height: "100%" }}>
+              <Stack spacing={3}>
                 <ConfidenceBarGroup
                   data={formatRelationshipsForDisplay()}
                   title="Detected Relationships"
                   emptyMessage="No relationships detected"
+                  sx={{
+                    maxHeight: 350,
+                    overflow: "auto",
+                  }}
                 />
 
                 <Card
@@ -1329,10 +1373,15 @@ const ResultsPage = () => {
                   sx={{
                     borderRadius: 3,
                     overflow: "hidden",
-                    flexGrow: 1,
+                    display: "flex",
+                    flexDirection: "column",
+                    height: "100%",
+                    minHeight: 350, // Minimum height to ensure consistency
                   }}
                 >
-                  <CardContent sx={{ p: 0 }}>
+                  <CardContent
+                    sx={{ p: 0, display: "flex", flexDirection: "column" }}
+                  >
                     <Box
                       sx={{
                         p: 3,
@@ -1350,7 +1399,14 @@ const ResultsPage = () => {
                       </Typography>
                     </Box>
 
-                    <Box sx={{ p: 3 }}>
+                    <Box
+                      sx={{
+                        p: 3,
+                        overflow: "auto",
+                        flexGrow: 1,
+                        maxHeight: 350,
+                      }}
+                    >
                       <Grid container spacing={1.5}>
                         {results?.relationships &&
                           results.relationships.map((rel, i) => (
@@ -1403,6 +1459,7 @@ const ResultsPage = () => {
                                     alignItems: "center",
                                     justifyContent: "space-between",
                                     mt: 1,
+                                    flexWrap: "wrap", // Allow content to wrap if needed
                                   }}
                                 >
                                   <Box
@@ -1410,6 +1467,7 @@ const ResultsPage = () => {
                                       borderRadius: 2,
                                       px: 1.5,
                                       py: 0.5,
+                                      mb: 0.5,
                                       bgcolor: "primary.main",
                                       color: "white",
                                       fontWeight: 500,
@@ -1421,6 +1479,7 @@ const ResultsPage = () => {
                                   <Box
                                     sx={{
                                       mx: 1,
+                                      mb: 0.5,
                                       fontSize: "0.85rem",
                                       fontStyle: "italic",
                                       color: "text.secondary",
@@ -1434,6 +1493,7 @@ const ResultsPage = () => {
                                       borderRadius: 2,
                                       px: 1.5,
                                       py: 0.5,
+                                      mb: 0.5,
                                       bgcolor: "secondary.main",
                                       color: "white",
                                       fontWeight: 500,
