@@ -6,74 +6,81 @@ import {
   useTheme,
   IconButton,
   Tooltip,
-  CircularProgress,
+  Paper,
   Fade,
 } from "@mui/material";
-import { useDropzone } from "react-dropzone";
 import { styled } from "@mui/material/styles";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import InsertDriveFileOutlinedIcon from "@mui/icons-material/InsertDriveFileOutlined";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import AddPhotoAlternateIcon from "@mui/icons-material/AddPhotoAlternate";
 
-// Styled components
-const UploadBox = styled(Box)(
-  ({ theme, isDragActive, isDragReject, hasFile }) => ({
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: theme.spacing(3),
-    borderWidth: 2,
-    borderRadius: 16,
-    borderColor: isDragReject
-      ? theme.palette.error.main
-      : isDragActive
-      ? theme.palette.primary.main
-      : hasFile
-      ? theme.palette.success.main
-      : theme.palette.divider,
-    borderStyle: "dashed",
-    backgroundColor: isDragActive
-      ? theme.palette.action.hover
-      : hasFile
-      ? "rgba(76, 175, 80, 0.04)"
-      : theme.palette.background.paper,
-    color: theme.palette.text.secondary,
-    outline: "none",
-    transition: "all 0.24s ease-in-out",
-    cursor: "pointer",
-    minHeight: 220,
-    position: "relative",
-    "&:hover": {
-      borderColor: hasFile
-        ? theme.palette.success.main
-        : theme.palette.primary.main,
-      backgroundColor: hasFile
-        ? "rgba(76, 175, 80, 0.08)"
-        : "rgba(0, 0, 0, 0.02)",
-    },
-  })
-);
+// Styled components for consistent styling
+const UploadContainer = styled(Paper)(({ theme }) => ({
+  width: "100%",
+  borderRadius: 16,
+  overflow: "hidden",
+  boxShadow: "none",
+  border: `2px dashed ${theme.palette.divider}`,
+  padding: theme.spacing(3),
+  backgroundColor: theme.palette.background.paper,
+  transition: "all 0.3s ease",
+  minHeight: 220,
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  justifyContent: "center",
+  position: "relative",
+  cursor: "pointer",
+  "&:hover": {
+    borderColor: theme.palette.primary.main,
+    backgroundColor: "rgba(0, 0, 0, 0.01)",
+  },
+}));
+
+const UploadContainerWithFile = styled(Paper)(({ theme }) => ({
+  width: "100%",
+  borderRadius: 16,
+  overflow: "hidden",
+  boxShadow: "none",
+  border: `2px dashed ${theme.palette.success.main}`,
+  padding: theme.spacing(3),
+  backgroundColor: "rgba(76, 175, 80, 0.04)",
+  transition: "all 0.3s ease",
+  minHeight: 220,
+  display: "flex",
+  flexDirection: "column",
+  justifyContent: "center",
+}));
 
 const PreviewContainer = styled(Box)(({ theme }) => ({
-  position: "relative",
   width: "100%",
-  height: "100%",
+  height: "180px",
   borderRadius: 8,
   overflow: "hidden",
   backgroundColor: theme.palette.background.default,
   display: "flex",
   justifyContent: "center",
   alignItems: "center",
+  marginBottom: theme.spacing(2),
 }));
 
-const PreviewImage = styled("img")(({ theme }) => ({
+const PreviewImage = styled("img")({
   maxWidth: "100%",
-  maxHeight: "180px",
+  maxHeight: "100%",
   objectFit: "contain",
+});
+
+const FileInfoBox = styled(Box)(({ theme }) => ({
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  width: "100%",
+  padding: theme.spacing(1.5),
   borderRadius: 8,
+  backgroundColor: theme.palette.background.default,
+  boxShadow: "0 2px 10px rgba(0,0,0,0.05)",
 }));
 
 const FileUploader = ({
@@ -86,7 +93,7 @@ const FileUploader = ({
   const [file, setFile] = useState(initialFile);
   const [preview, setPreview] = useState("");
   const [fileError, setFileError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef(null);
 
   // Process a file after it's selected
@@ -118,16 +125,6 @@ const FileUploader = ({
     [maxSize, onFileSelect]
   );
 
-  // Handle file drop from dropzone
-  const onDrop = useCallback(
-    (acceptedFiles) => {
-      if (acceptedFiles.length > 0) {
-        processFile(acceptedFiles[0]);
-      }
-    },
-    [processFile]
-  );
-
   // Handle file selection from the input
   const handleFileChange = (event) => {
     if (event.target.files && event.target.files[0]) {
@@ -143,6 +140,26 @@ const FileUploader = ({
     }
   };
 
+  // Handle drag events
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setDragOver(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    setDragOver(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setDragOver(false);
+
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      processFile(e.dataTransfer.files[0]);
+    }
+  };
+
   // Clean up on unmount or when preview changes
   useEffect(() => {
     return () => {
@@ -151,16 +168,6 @@ const FileUploader = ({
       }
     };
   }, [preview]);
-
-  // Initialize dropzone
-  const { getRootProps, getInputProps, isDragActive, isDragReject } =
-    useDropzone({
-      onDrop,
-      accept: acceptedTypes,
-      maxFiles: 1,
-      noClick: !!file, // Disable click to open when file exists
-      disabled: !!file, // Disable dropzone when file exists
-    });
 
   // Handle file removal
   const handleRemoveFile = (e) => {
@@ -208,124 +215,90 @@ const FileUploader = ({
 
       {file ? (
         // File preview when a file is selected
-        <Box
-          sx={{
-            borderWidth: 2,
-            borderRadius: 16,
-            borderColor: theme.palette.success.main,
-            borderStyle: "dashed",
-            backgroundColor: "rgba(76, 175, 80, 0.04)",
-            padding: theme.spacing(3),
-            minHeight: 220,
-          }}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
         >
-          <motion.div
-            key="preview"
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9 }}
-            transition={{ type: "spring", stiffness: 300, damping: 20 }}
-            style={{ width: "100%", height: "100%", position: "relative" }}
-          >
-            <Box
-              sx={{
-                position: "relative",
-                height: "100%",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-              }}
-            >
-              <PreviewContainer>
-                <PreviewImage src={preview} alt="Preview" />
-              </PreviewContainer>
+          <UploadContainerWithFile>
+            <PreviewContainer>
+              <PreviewImage src={preview} alt="Preview" />
+            </PreviewContainer>
 
-              <Box
-                sx={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  width: "100%",
-                  mt: 2,
-                  bgcolor: "background.default",
-                  p: 1.5,
-                  borderRadius: 2,
-                }}
-              >
-                <Box sx={{ display: "flex", alignItems: "center" }}>
-                  <InsertDriveFileOutlinedIcon
-                    color="primary"
-                    sx={{ mr: 1, fontSize: 20 }}
-                  />
-                  <Box>
-                    <Typography
-                      variant="body2"
-                      fontWeight={500}
-                      noWrap
-                      sx={{ maxWidth: 200 }}
-                    >
-                      {file.name}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {formatFileSize(file.size)}
-                    </Typography>
-                  </Box>
-                </Box>
-
+            <FileInfoBox>
+              <Box sx={{ display: "flex", alignItems: "center" }}>
+                <InsertDriveFileOutlinedIcon
+                  color="primary"
+                  sx={{ mr: 1.5, fontSize: 20 }}
+                />
                 <Box>
-                  <Tooltip title="Remove file">
-                    <IconButton
-                      size="small"
-                      onClick={handleRemoveFile}
-                      sx={{
-                        bgcolor: "error.light",
-                        color: "white",
-                        "&:hover": { bgcolor: "error.main" },
-                      }}
-                    >
-                      <DeleteOutlineIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                  <Tooltip title="Change file">
-                    <IconButton
-                      size="small"
-                      onClick={handleChangeFile}
-                      sx={{
-                        ml: 1,
-                        bgcolor: "primary.light",
-                        color: "white",
-                        "&:hover": { bgcolor: "primary.main" },
-                      }}
-                    >
-                      <AddPhotoAlternateIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
+                  <Typography
+                    variant="body2"
+                    fontWeight={500}
+                    noWrap
+                    sx={{ maxWidth: 200 }}
+                  >
+                    {file.name}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {formatFileSize(file.size)}
+                  </Typography>
                 </Box>
               </Box>
-            </Box>
-          </motion.div>
-        </Box>
+
+              <Box>
+                <Tooltip title="Remove file">
+                  <IconButton
+                    size="small"
+                    onClick={handleRemoveFile}
+                    sx={{
+                      bgcolor: "error.light",
+                      color: "white",
+                      "&:hover": { bgcolor: "error.main" },
+                      mr: 1,
+                      width: 32,
+                      height: 32,
+                    }}
+                  >
+                    <DeleteOutlineIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title="Change file">
+                  <IconButton
+                    size="small"
+                    onClick={handleChangeFile}
+                    sx={{
+                      bgcolor: "primary.light",
+                      color: "white",
+                      "&:hover": { bgcolor: "primary.main" },
+                      width: 32,
+                      height: 32,
+                    }}
+                  >
+                    <AddPhotoAlternateIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              </Box>
+            </FileInfoBox>
+          </UploadContainerWithFile>
+        </motion.div>
       ) : (
-        // Dropzone when no file is selected
-        <UploadBox
-          {...getRootProps()}
-          isDragActive={isDragActive}
-          isDragReject={isDragReject}
-          hasFile={false}
+        // Upload area when no file is selected
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
         >
-          <input {...getInputProps()} />
-          <motion.div
-            key="upload"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              height: "100%",
+          <UploadContainer
+            onClick={handleBrowseClick}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            sx={{
+              borderColor: dragOver ? "primary.main" : "divider",
+              bgcolor: dragOver
+                ? "rgba(63, 81, 181, 0.04)"
+                : "background.paper",
             }}
           >
             <Box
@@ -333,19 +306,19 @@ const FileUploader = ({
                 width: 80,
                 height: 80,
                 borderRadius: "50%",
-                bgcolor: "primary.light",
+                bgcolor: "primary.main",
                 color: "white",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 mb: 2,
-                boxShadow: "0 8px 20px rgba(63, 81, 181, 0.2)",
+                boxShadow: "0 6px 16px rgba(63, 81, 181, 0.2)",
                 backgroundImage:
                   "linear-gradient(135deg, #3f51b5 0%, #5c6bc0 100%)",
               }}
               component={motion.div}
               animate={{
-                y: [0, -10, 0],
+                y: [0, -8, 0],
                 scale: [1, 1.05, 1],
               }}
               transition={{
@@ -354,7 +327,7 @@ const FileUploader = ({
                 ease: "easeInOut",
               }}
             >
-              <CloudUploadIcon sx={{ fontSize: 40 }} />
+              <CloudUploadIcon sx={{ fontSize: 36 }} />
             </Box>
 
             <Typography
@@ -362,6 +335,7 @@ const FileUploader = ({
               gutterBottom
               align="center"
               fontWeight={500}
+              sx={{ mb: 1 }}
             >
               Drag & drop your image here
             </Typography>
@@ -379,6 +353,14 @@ const FileUploader = ({
               variant="contained"
               onClick={handleBrowseClick}
               startIcon={<AddPhotoAlternateIcon />}
+              sx={{
+                px: 3,
+                py: 1,
+                borderRadius: 2,
+                textTransform: "none",
+                fontWeight: 600,
+                boxShadow: "0 4px 12px rgba(63, 81, 181, 0.2)",
+              }}
             >
               Browse Files
             </Button>
@@ -392,8 +374,8 @@ const FileUploader = ({
               Supported formats: JPEG, PNG, WebP (Max{" "}
               {Math.round(maxSize / (1024 * 1024))}MB)
             </Typography>
-          </motion.div>
-        </UploadBox>
+          </UploadContainer>
+        </motion.div>
       )}
 
       <Fade in={!!fileError}>
