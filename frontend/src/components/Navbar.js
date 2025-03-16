@@ -14,15 +14,24 @@ import {
   ListItem,
   ListItemButton,
   ListItemText,
+  useTheme,
+  useMediaQuery,
+  Avatar,
 } from "@mui/material";
 import { Link as RouterLink, useLocation } from "react-router-dom";
 import MenuIcon from "@mui/icons-material/Menu";
 import AccountTreeIcon from "@mui/icons-material/AccountTree";
+import LightModeIcon from "@mui/icons-material/LightMode";
+import GitHubIcon from "@mui/icons-material/GitHub";
+import { motion } from "framer-motion";
 
 // Hide navbar on scroll down
 function HideOnScroll(props) {
   const { children } = props;
-  const trigger = useScrollTrigger();
+  const trigger = useScrollTrigger({
+    disableHysteresis: true,
+    threshold: 100,
+  });
 
   return (
     <Slide appear={false} direction="down" in={!trigger}>
@@ -31,8 +40,14 @@ function HideOnScroll(props) {
   );
 }
 
+// Helper for animations
+const MotionBox = motion(Box);
+
 const Navbar = () => {
   const location = useLocation();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
@@ -59,11 +74,11 @@ const Navbar = () => {
 
   const navItems = [
     { name: "Home", path: "/" },
-    { name: "Scene Graph Inference", path: "/inference" },
+    { name: "Scene Graph Generator", path: "/inference" },
   ];
 
   const drawer = (
-    <Box onClick={handleDrawerToggle} sx={{ textAlign: "center" }}>
+    <Box sx={{ textAlign: "center", py: 2 }}>
       <Box
         sx={{
           my: 2,
@@ -72,12 +87,23 @@ const Navbar = () => {
           justifyContent: "center",
         }}
       >
-        <AccountTreeIcon sx={{ mr: 1 }} />
-        <Typography variant="h6" color="inherit" noWrap>
+        <Avatar
+          sx={{
+            bgcolor: "primary.main",
+            width: 40,
+            height: 40,
+            mr: 1,
+            backgroundImage:
+              "linear-gradient(135deg, #3f51b5 0%, #5c6bc0 100%)",
+          }}
+        >
+          <AccountTreeIcon fontSize="small" />
+        </Avatar>
+        <Typography variant="h6" color="inherit" fontWeight={700}>
           Scene Graph
         </Typography>
       </Box>
-      <List>
+      <List sx={{ pt: 2 }}>
         {navItems.map((item) => (
           <ListItem key={item.name} disablePadding>
             <ListItemButton
@@ -90,7 +116,9 @@ const Navbar = () => {
                     ? "primary.main"
                     : "text.primary",
                 fontWeight: location.pathname === item.path ? 600 : 400,
+                py: 1.5,
               }}
+              onClick={handleDrawerToggle}
             >
               <ListItemText primary={item.name} />
             </ListItemButton>
@@ -105,95 +133,168 @@ const Navbar = () => {
       <AppBar
         position="sticky"
         color="default"
-        elevation={isScrolled ? 4 : 0}
+        elevation={isScrolled ? 2 : 0}
         sx={{
-          bgcolor: isScrolled
-            ? "rgba(255, 255, 255, 0.95)"
-            : "background.default",
+          bgcolor: isScrolled ? "rgba(255, 255, 255, 0.95)" : "transparent",
           backdropFilter: isScrolled ? "blur(20px)" : "none",
-          transition: "background-color 0.3s, box-shadow 0.3s",
+          transition: "all 0.3s ease",
+          borderBottom: isScrolled ? "none" : "1px solid",
+          borderColor: "divider",
         }}
       >
         <Container maxWidth="lg">
-          <Toolbar disableGutters sx={{ minHeight: { xs: "64px" } }}>
+          <Toolbar disableGutters sx={{ minHeight: { xs: "70px" } }}>
             {/* Mobile menu button */}
             <IconButton
               color="inherit"
               aria-label="open drawer"
               edge="start"
               onClick={handleDrawerToggle}
-              sx={{ mr: 2, display: { sm: "none" } }}
+              sx={{ mr: 2, display: { md: "none" } }}
             >
               <MenuIcon />
             </IconButton>
 
             {/* Logo and title */}
-            <Box
+            <MotionBox
               sx={{
                 display: "flex",
                 alignItems: "center",
-                flexGrow: { xs: 1, sm: 0 },
+                flexGrow: { xs: 1, md: 0 },
+                mr: 4,
               }}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5 }}
             >
-              <AccountTreeIcon sx={{ mr: 1, fontSize: 28 }} />
+              <Avatar
+                sx={{
+                  bgcolor: "primary.main",
+                  width: 40,
+                  height: 40,
+                  mr: 1.5,
+                  backgroundImage:
+                    "linear-gradient(135deg, #3f51b5 0%, #5c6bc0 100%)",
+                  boxShadow: "0 4px 14px rgba(63, 81, 181, 0.2)",
+                }}
+              >
+                <AccountTreeIcon fontSize="small" />
+              </Avatar>
               <Typography
                 variant="h6"
                 component={RouterLink}
                 to="/"
                 sx={{
-                  mr: 2,
                   fontWeight: 700,
-                  color: "inherit",
+                  color: "text.primary",
                   textDecoration: "none",
                   display: "flex",
+                  letterSpacing: "-0.01em",
                 }}
               >
                 Scene Graph
               </Typography>
-            </Box>
+            </MotionBox>
 
             {/* Desktop Navigation */}
             <Box
               sx={{
                 flexGrow: 1,
-                display: { xs: "none", sm: "flex" },
+                display: { xs: "none", md: "flex" },
                 justifyContent: "center",
               }}
             >
-              {navItems.map((item) => (
-                <Button
+              {navItems.map((item, index) => (
+                <MotionBox
                   key={item.name}
-                  component={RouterLink}
-                  to={item.path}
-                  sx={{
-                    mx: 1,
-                    color:
-                      location.pathname === item.path
-                        ? "primary.main"
-                        : "text.primary",
-                    fontWeight: location.pathname === item.path ? 600 : 400,
-                    "&:hover": {
-                      backgroundColor: "rgba(0, 0, 0, 0.04)",
-                    },
-                  }}
+                  initial={{ opacity: 0, y: -20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.1 * (index + 1) }}
                 >
-                  {item.name}
-                </Button>
+                  <Button
+                    component={RouterLink}
+                    to={item.path}
+                    sx={{
+                      mx: 1,
+                      color:
+                        location.pathname === item.path
+                          ? "primary.main"
+                          : "text.primary",
+                      fontWeight: location.pathname === item.path ? 600 : 500,
+                      position: "relative",
+                      py: 1,
+                      "&::after":
+                        location.pathname === item.path
+                          ? {
+                              content: '""',
+                              position: "absolute",
+                              bottom: "6px",
+                              left: "10px",
+                              right: "10px",
+                              height: "3px",
+                              bgcolor: "primary.main",
+                              borderRadius: "3px",
+                              backgroundImage:
+                                "linear-gradient(135deg, #3f51b5 0%, #5c6bc0 100%)",
+                            }
+                          : {},
+                      "&:hover": {
+                        backgroundColor: "rgba(0, 0, 0, 0.02)",
+                        transform: "translateY(0)",
+                        boxShadow: "none",
+                      },
+                    }}
+                  >
+                    {item.name}
+                  </Button>
+                </MotionBox>
               ))}
             </Box>
 
-            {/* Right side actions (could add more here in the future) */}
-            <Box sx={{ display: { xs: "none", sm: "flex" } }}>
-              <Button
-                variant="contained"
+            {/* Right side actions */}
+            <MotionBox
+              sx={{ display: "flex", alignItems: "center", gap: 1 }}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+            >
+              <IconButton
                 color="primary"
-                component={RouterLink}
-                to="/inference"
-                sx={{ fontWeight: 600 }}
+                aria-label="light mode"
+                sx={{
+                  bgcolor: "rgba(63, 81, 181, 0.08)",
+                  "&:hover": { bgcolor: "rgba(63, 81, 181, 0.15)" },
+                }}
               >
-                Start Inference
-              </Button>
-            </Box>
+                <LightModeIcon />
+              </IconButton>
+
+              <IconButton
+                color="inherit"
+                aria-label="github"
+                href="https://github.com/dixisouls/scene-graph-generation"
+                target="_blank"
+                rel="noopener noreferrer"
+                sx={{
+                  bgcolor: "rgba(0, 0, 0, 0.05)",
+                  "&:hover": { bgcolor: "rgba(0, 0, 0, 0.1)" },
+                }}
+              >
+                <GitHubIcon />
+              </IconButton>
+
+              {!isMobile && (
+                <Button
+                  variant="contained"
+                  color="primary"
+                  component={RouterLink}
+                  to="/inference"
+                  sx={{ ml: 1 }}
+                >
+                  Try it now
+                </Button>
+              )}
+            </MotionBox>
           </Toolbar>
         </Container>
 
@@ -206,11 +307,12 @@ const Navbar = () => {
             keepMounted: true, // Better mobile performance
           }}
           sx={{
-            display: { xs: "block", sm: "none" },
+            display: { xs: "block", md: "none" },
             "& .MuiDrawer-paper": {
               boxSizing: "border-box",
-              width: 240,
+              width: 280,
               bgcolor: "background.paper",
+              borderRadius: "0 16px 16px 0",
             },
           }}
         >

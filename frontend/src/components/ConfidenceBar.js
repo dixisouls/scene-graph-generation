@@ -1,7 +1,21 @@
 import React, { useEffect, useState } from "react";
-import { Box, Typography, LinearProgress, Paper } from "@mui/material";
+import {
+  Box,
+  Typography,
+  LinearProgress,
+  Paper,
+  Tooltip,
+  useTheme,
+  Card,
+  CardHeader,
+  CardContent,
+  Divider,
+} from "@mui/material";
 import { styled } from "@mui/material/styles";
 import { motion } from "framer-motion";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
+import TrendingUpIcon from "@mui/icons-material/TrendingUp";
+import TrendingDownIcon from "@mui/icons-material/TrendingDown";
 
 // Custom styled LinearProgress with gradient coloring based on confidence value
 const StyledLinearProgress = styled(LinearProgress)(({ theme, value }) => {
@@ -12,32 +26,68 @@ const StyledLinearProgress = styled(LinearProgress)(({ theme, value }) => {
     return theme.palette.success.main;
   };
 
+  // Create gradient for the progress bar
+  const getGradient = (val) => {
+    if (val < 30) {
+      return `linear-gradient(90deg, ${theme.palette.error.main} 0%, ${theme.palette.error.light} 100%)`;
+    } else if (val < 70) {
+      return `linear-gradient(90deg, ${theme.palette.warning.main} 0%, ${theme.palette.warning.light} 100%)`;
+    } else {
+      return `linear-gradient(90deg, ${theme.palette.success.main} 0%, ${theme.palette.success.light} 100%)`;
+    }
+  };
+
   return {
-    height: 10,
-    borderRadius: 5,
+    height: 8,
+    borderRadius: 4,
     backgroundColor: theme.palette.grey[200],
     "& .MuiLinearProgress-bar": {
-      borderRadius: 5,
-      backgroundColor: getColorForValue(value),
+      borderRadius: 4,
+      backgroundImage: getGradient(value),
+      boxShadow: value > 50 ? `0 0 10px rgba(0, 0, 0, 0.1)` : "none",
     },
   };
 });
 
 // Wrapper component with animation
-const AnimatedBox = ({ children, delay = 0 }) => (
+const AnimatedBox = ({ children, delay = 0, index = 0 }) => (
   <Box
     component={motion.div}
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.5, delay }}
-    sx={{ mb: 1 }}
+    transition={{ duration: 0.5, delay: 0.05 * index + delay }}
+    sx={{ mb: 1.5 }}
   >
     {children}
   </Box>
 );
 
+// Value indicator that appears at the end of the progress bar
+const ValueIndicator = styled(Box)(({ theme, value }) => {
+  const getColor = (val) => {
+    if (val < 30) return theme.palette.error.main;
+    if (val < 70) return theme.palette.warning.main;
+    return theme.palette.success.main;
+  };
+
+  return {
+    position: "absolute",
+    right: "0",
+    top: "-20px",
+    backgroundColor: getColor(value),
+    color: "#fff",
+    padding: "2px 6px",
+    borderRadius: "4px",
+    fontSize: "12px",
+    fontWeight: "bold",
+    boxShadow: "0 2px 5px rgba(0,0,0,0.2)",
+    transform: "translateX(50%)",
+  };
+});
+
 const ConfidenceBar = ({ label, value, index = 0, showValueText = true }) => {
   const [progress, setProgress] = useState(0);
+  const theme = useTheme();
 
   // Animate progress value
   useEffect(() => {
@@ -50,23 +100,96 @@ const ConfidenceBar = ({ label, value, index = 0, showValueText = true }) => {
     };
   }, [value, index]);
 
+  // Get icon based on confidence
+  const getConfidenceIcon = () => {
+    if (progress > 70) {
+      return (
+        <TrendingUpIcon
+          sx={{ fontSize: 16, color: theme.palette.success.main }}
+        />
+      );
+    } else if (progress > 30) {
+      return null;
+    } else {
+      return (
+        <TrendingDownIcon
+          sx={{ fontSize: 16, color: theme.palette.error.main }}
+        />
+      );
+    }
+  };
+
   return (
-    <AnimatedBox delay={0.1 * index}>
-      <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
-        <Typography variant="body2" fontWeight={500}>
-          {label}
-        </Typography>
-        {showValueText && (
-          <Typography variant="body2" color="text.secondary">
-            {Math.round(progress)}%
-          </Typography>
-        )}
+    <AnimatedBox delay={0.1} index={index}>
+      <Box sx={{ position: "relative", mb: 2 }}>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            mb: 0.5,
+            alignItems: "center",
+          }}
+        >
+          <Box sx={{ display: "flex", alignItems: "center" }}>
+            <Typography
+              variant="body2"
+              fontWeight={500}
+              sx={{
+                maxWidth: 200,
+                textOverflow: "ellipsis",
+                overflow: "hidden",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {label}
+            </Typography>
+            {getConfidenceIcon()}
+          </Box>
+          {showValueText && (
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              fontWeight={500}
+            >
+              {Math.round(progress)}%
+            </Typography>
+          )}
+        </Box>
+        <Box sx={{ position: "relative" }}>
+          <StyledLinearProgress
+            variant="determinate"
+            value={progress}
+            value-text={`${Math.round(progress)}%`}
+          />
+          <Box
+            component={motion.div}
+            initial={{ opacity: 0, scale: 0 }}
+            animate={{
+              opacity: progress > 0 ? 1 : 0,
+              scale: progress > 0 ? 1 : 0,
+            }}
+            transition={{ delay: 0.3 + index * 0.05, duration: 0.3 }}
+            sx={{
+              width: 12,
+              height: 12,
+              borderRadius: "50%",
+              bgcolor:
+                progress > 70
+                  ? "success.main"
+                  : progress > 30
+                  ? "warning.main"
+                  : "error.main",
+              position: "absolute",
+              top: "50%",
+              left: `${progress}%`,
+              transform: "translate(-50%, -50%)",
+              boxShadow: "0 0 6px rgba(0,0,0,0.2)",
+              transition: "left 0.3s ease-out",
+              zIndex: 2,
+            }}
+          />
+        </Box>
       </Box>
-      <StyledLinearProgress
-        variant="determinate"
-        value={progress}
-        value-text={`${Math.round(progress)}%`}
-      />
     </AnimatedBox>
   );
 };
@@ -76,45 +199,105 @@ const ConfidenceBarGroup = ({
   title,
   emptyMessage = "No data available",
 }) => {
-  return (
-    <Paper
-      elevation={0}
-      sx={{
-        p: 2,
-        mb: 2,
-        bgcolor: "background.paper",
-        borderRadius: 2,
-        border: "1px solid",
-        borderColor: "divider",
-      }}
-    >
-      <Typography
-        variant="h6"
-        gutterBottom
-        sx={{ borderBottom: "1px solid", borderColor: "divider", pb: 1, mb: 2 }}
-      >
-        {title}
-      </Typography>
+  const theme = useTheme();
 
-      {data && data.length > 0 ? (
-        data.map((item, index) => (
-          <ConfidenceBar
-            key={`${item.label}-${index}`}
-            label={item.label}
-            value={item.score}
-            index={index}
-          />
-        ))
-      ) : (
-        <Typography
-          color="text.secondary"
-          variant="body2"
-          sx={{ py: 2, textAlign: "center" }}
-        >
-          {emptyMessage}
-        </Typography>
-      )}
-    </Paper>
+  // Calculate average confidence
+  const averageConfidence =
+    data && data.length > 0
+      ? data.reduce((sum, item) => sum + item.score, 0) / data.length
+      : 0;
+
+  return (
+    <Card
+      elevation={1}
+      sx={{
+        borderRadius: 3,
+        overflow: "hidden",
+        transition: "all 0.3s ease",
+        height: "100%",
+      }}
+      component={motion.div}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+    >
+      <CardHeader
+        title={
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <Typography variant="h6" fontWeight={600}>
+              {title}
+            </Typography>
+            {data && data.length > 0 && (
+              <Tooltip title="Average confidence score">
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    bgcolor:
+                      averageConfidence > 0.7
+                        ? "success.light"
+                        : averageConfidence > 0.3
+                        ? "warning.light"
+                        : "error.light",
+                    color: "white",
+                    borderRadius: 5,
+                    px: 1.5,
+                    py: 0.5,
+                    fontSize: "0.8rem",
+                    fontWeight: 600,
+                  }}
+                >
+                  <InfoOutlinedIcon sx={{ fontSize: 16, mr: 0.5 }} />
+                  {(averageConfidence * 100).toFixed(0)}%
+                </Box>
+              </Tooltip>
+            )}
+          </Box>
+        }
+        sx={{
+          bgcolor: "background.default",
+          borderBottom: "1px solid",
+          borderColor: "divider",
+          pb: 1.5,
+        }}
+      />
+
+      <CardContent sx={{ px: 2, py: 2 }}>
+        {data && data.length > 0 ? (
+          data.map((item, index) => (
+            <ConfidenceBar
+              key={`${item.label}-${index}`}
+              label={item.label}
+              value={item.score}
+              index={index}
+            />
+          ))
+        ) : (
+          <Box
+            sx={{
+              py: 4,
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              bgcolor: "background.default",
+              borderRadius: 2,
+              border: "1px dashed",
+              borderColor: "divider",
+            }}
+          >
+            <Typography color="text.secondary" variant="body2">
+              {emptyMessage}
+            </Typography>
+          </Box>
+        )}
+      </CardContent>
+    </Card>
   );
 };
 

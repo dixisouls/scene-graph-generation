@@ -1,483 +1,325 @@
 import React from "react";
-import Lottie from "react-lottie";
-import { Box, Typography, Paper } from "@mui/material";
+import {
+  Box,
+  Typography,
+  Paper,
+  CircularProgress,
+  useTheme,
+} from "@mui/material";
+import { motion } from "framer-motion";
 
-// Animation data for neural network processing
-const animationData = {
-  v: "5.7.14",
-  fr: 60,
-  ip: 0,
-  op: 180,
-  w: 800,
-  h: 600,
-  nm: "Neural Network Animation",
-  ddd: 0,
-  assets: [],
-  layers: [
-    {
-      ddd: 0,
-      ind: 1,
-      ty: 4,
-      nm: "Nodes",
-      sr: 1,
-      ks: {
-        o: { a: 0, k: 100, ix: 11 },
-        r: { a: 0, k: 0, ix: 10 },
-        p: { a: 0, k: [400, 300, 0], ix: 2, l: 2 },
-        a: { a: 0, k: [0, 0, 0], ix: 1, l: 2 },
-        s: { a: 0, k: [100, 100, 100], ix: 6, l: 2 },
+// Neural Network Animation Component
+const NeuralNetworkAnimation = () => {
+  const theme = useTheme();
+
+  // Define animation variants for nodes
+  const nodeVariants = {
+    pulse: {
+      scale: [1, 1.15, 1],
+      opacity: [0.7, 1, 0.7],
+      transition: {
+        duration: 2,
+        repeat: Infinity,
+        repeatType: "reverse",
       },
-      ao: 0,
-      shapes: [
-        {
-          ty: "gr",
-          it: [
-            {
-              d: 1,
-              ty: "el",
-              s: { a: 0, k: [24, 24], ix: 2 },
-              p: { a: 0, k: [0, 0], ix: 3 },
-              nm: "Ellipse Path 1",
-              mn: "ADBE Vector Shape - Ellipse",
-              hd: false,
-            },
-            {
-              ty: "st",
-              c: { a: 0, k: [0.247, 0.314, 0.71, 1], ix: 3 },
-              o: { a: 0, k: 100, ix: 4 },
-              w: { a: 0, k: 2, ix: 5 },
-              lc: 1,
-              lj: 1,
-              ml: 4,
-              bm: 0,
-              nm: "Stroke 1",
-              mn: "ADBE Vector Graphic - Stroke",
-              hd: false,
-            },
-            {
-              ty: "fl",
-              c: { a: 0, k: [0.247, 0.314, 0.71, 1], ix: 4 },
-              o: {
-                a: 1,
-                k: [
-                  { t: 0, s: [100], h: 1 },
-                  { t: 30, s: [50], h: 1 },
-                  { t: 60, s: [100], h: 1 },
-                  { t: 90, s: [50], h: 1 },
-                  { t: 120, s: [100], h: 1 },
-                  { t: 150, s: [50], h: 1 },
-                  { t: 180, s: [100], h: 1 },
-                ],
-                ix: 5,
-              },
-              r: 1,
-              bm: 0,
-              nm: "Fill 1",
-              mn: "ADBE Vector Graphic - Fill",
-              hd: false,
-            },
-            {
-              ty: "tr",
-              p: { a: 0, k: [-120, -50], ix: 2 },
-              a: { a: 0, k: [0, 0], ix: 1 },
-              s: { a: 0, k: [100, 100], ix: 3 },
-              r: { a: 0, k: 0, ix: 6 },
-              o: { a: 0, k: 100, ix: 7 },
-              sk: { a: 0, k: 0, ix: 4 },
-              sa: { a: 0, k: 0, ix: 5 },
-              nm: "Transform",
-            },
-          ],
-          nm: "Node 1",
-          np: 3,
-          cix: 2,
-          bm: 0,
-          ix: 1,
-          mn: "ADBE Vector Group",
-          hd: false,
-        },
-        {
-          ty: "gr",
-          it: [
-            {
-              d: 1,
-              ty: "el",
-              s: { a: 0, k: [24, 24], ix: 2 },
-              p: { a: 0, k: [0, 0], ix: 3 },
-              nm: "Ellipse Path 1",
-              mn: "ADBE Vector Shape - Ellipse",
-              hd: false,
-            },
-            {
-              ty: "st",
-              c: { a: 0, k: [0.247, 0.314, 0.71, 1], ix: 3 },
-              o: { a: 0, k: 100, ix: 4 },
-              w: { a: 0, k: 2, ix: 5 },
-              lc: 1,
-              lj: 1,
-              ml: 4,
-              bm: 0,
-              nm: "Stroke 1",
-              mn: "ADBE Vector Graphic - Stroke",
-              hd: false,
-            },
-            {
-              ty: "fl",
-              c: { a: 0, k: [0.247, 0.314, 0.71, 1], ix: 4 },
-              o: {
-                a: 1,
-                k: [
-                  { t: 20, s: [100], h: 1 },
-                  { t: 50, s: [50], h: 1 },
-                  { t: 80, s: [100], h: 1 },
-                  { t: 110, s: [50], h: 1 },
-                  { t: 140, s: [100], h: 1 },
-                  { t: 170, s: [50], h: 1 },
-                  { t: 200, s: [100], h: 1 },
-                ],
-                ix: 5,
-              },
-              r: 1,
-              bm: 0,
-              nm: "Fill 1",
-              mn: "ADBE Vector Graphic - Fill",
-              hd: false,
-            },
-            {
-              ty: "tr",
-              p: { a: 0, k: [0, 0], ix: 2 },
-              a: { a: 0, k: [0, 0], ix: 1 },
-              s: { a: 0, k: [100, 100], ix: 3 },
-              r: { a: 0, k: 0, ix: 6 },
-              o: { a: 0, k: 100, ix: 7 },
-              sk: { a: 0, k: 0, ix: 4 },
-              sa: { a: 0, k: 0, ix: 5 },
-              nm: "Transform",
-            },
-          ],
-          nm: "Node 2",
-          np: 3,
-          cix: 2,
-          bm: 0,
-          ix: 2,
-          mn: "ADBE Vector Group",
-          hd: false,
-        },
-        {
-          ty: "gr",
-          it: [
-            {
-              d: 1,
-              ty: "el",
-              s: { a: 0, k: [24, 24], ix: 2 },
-              p: { a: 0, k: [0, 0], ix: 3 },
-              nm: "Ellipse Path 1",
-              mn: "ADBE Vector Shape - Ellipse",
-              hd: false,
-            },
-            {
-              ty: "st",
-              c: { a: 0, k: [0.247, 0.314, 0.71, 1], ix: 3 },
-              o: { a: 0, k: 100, ix: 4 },
-              w: { a: 0, k: 2, ix: 5 },
-              lc: 1,
-              lj: 1,
-              ml: 4,
-              bm: 0,
-              nm: "Stroke 1",
-              mn: "ADBE Vector Graphic - Stroke",
-              hd: false,
-            },
-            {
-              ty: "fl",
-              c: { a: 0, k: [0.247, 0.314, 0.71, 1], ix: 4 },
-              o: {
-                a: 1,
-                k: [
-                  { t: 40, s: [100], h: 1 },
-                  { t: 70, s: [50], h: 1 },
-                  { t: 100, s: [100], h: 1 },
-                  { t: 130, s: [50], h: 1 },
-                  { t: 160, s: [100], h: 1 },
-                ],
-                ix: 5,
-              },
-              r: 1,
-              bm: 0,
-              nm: "Fill 1",
-              mn: "ADBE Vector Graphic - Fill",
-              hd: false,
-            },
-            {
-              ty: "tr",
-              p: { a: 0, k: [120, 50], ix: 2 },
-              a: { a: 0, k: [0, 0], ix: 1 },
-              s: { a: 0, k: [100, 100], ix: 3 },
-              r: { a: 0, k: 0, ix: 6 },
-              o: { a: 0, k: 100, ix: 7 },
-              sk: { a: 0, k: 0, ix: 4 },
-              sa: { a: 0, k: 0, ix: 5 },
-              nm: "Transform",
-            },
-          ],
-          nm: "Node 3",
-          np: 3,
-          cix: 2,
-          bm: 0,
-          ix: 3,
-          mn: "ADBE Vector Group",
-          hd: false,
-        },
-        {
-          ty: "gr",
-          it: [
-            {
-              ind: 0,
-              ty: "sh",
-              ix: 1,
-              ks: {
-                a: 0,
-                k: {
-                  i: [
-                    [0, 0],
-                    [0, 0],
-                  ],
-                  o: [
-                    [0, 0],
-                    [0, 0],
-                  ],
-                  v: [
-                    [-120, -50],
-                    [0, 0],
-                  ],
-                  c: false,
-                },
-                ix: 2,
-              },
-              nm: "Path 1",
-              mn: "ADBE Vector Shape - Group",
-              hd: false,
-            },
-            {
-              ty: "st",
-              c: { a: 0, k: [0.6, 0.6, 0.6, 1], ix: 3 },
-              o: {
-                a: 1,
-                k: [
-                  { t: 0, s: [30], h: 1 },
-                  { t: 60, s: [100], h: 1 },
-                  { t: 120, s: [30], h: 1 },
-                  { t: 180, s: [100], h: 1 },
-                ],
-                ix: 4,
-              },
-              w: { a: 0, k: 2, ix: 5 },
-              lc: 2,
-              lj: 2,
-              bm: 0,
-              nm: "Stroke 1",
-              mn: "ADBE Vector Graphic - Stroke",
-              hd: false,
-            },
-            {
-              ty: "tr",
-              p: { a: 0, k: [0, 0], ix: 2 },
-              a: { a: 0, k: [0, 0], ix: 1 },
-              s: { a: 0, k: [100, 100], ix: 3 },
-              r: { a: 0, k: 0, ix: 6 },
-              o: { a: 0, k: 100, ix: 7 },
-              sk: { a: 0, k: 0, ix: 4 },
-              sa: { a: 0, k: 0, ix: 5 },
-              nm: "Transform",
-            },
-          ],
-          nm: "Edge 1-2",
-          np: 2,
-          cix: 2,
-          bm: 0,
-          ix: 4,
-          mn: "ADBE Vector Group",
-          hd: false,
-        },
-        {
-          ty: "gr",
-          it: [
-            {
-              ind: 0,
-              ty: "sh",
-              ix: 1,
-              ks: {
-                a: 0,
-                k: {
-                  i: [
-                    [0, 0],
-                    [0, 0],
-                  ],
-                  o: [
-                    [0, 0],
-                    [0, 0],
-                  ],
-                  v: [
-                    [0, 0],
-                    [120, 50],
-                  ],
-                  c: false,
-                },
-                ix: 2,
-              },
-              nm: "Path 1",
-              mn: "ADBE Vector Shape - Group",
-              hd: false,
-            },
-            {
-              ty: "st",
-              c: { a: 0, k: [0.6, 0.6, 0.6, 1], ix: 3 },
-              o: {
-                a: 1,
-                k: [
-                  { t: 30, s: [30], h: 1 },
-                  { t: 90, s: [100], h: 1 },
-                  { t: 150, s: [30], h: 1 },
-                ],
-                ix: 4,
-              },
-              w: { a: 0, k: 2, ix: 5 },
-              lc: 2,
-              lj: 2,
-              bm: 0,
-              nm: "Stroke 1",
-              mn: "ADBE Vector Graphic - Stroke",
-              hd: false,
-            },
-            {
-              ty: "tr",
-              p: { a: 0, k: [0, 0], ix: 2 },
-              a: { a: 0, k: [0, 0], ix: 1 },
-              s: { a: 0, k: [100, 100], ix: 3 },
-              r: { a: 0, k: 0, ix: 6 },
-              o: { a: 0, k: 100, ix: 7 },
-              sk: { a: 0, k: 0, ix: 4 },
-              sa: { a: 0, k: 0, ix: 5 },
-              nm: "Transform",
-            },
-          ],
-          nm: "Edge 2-3",
-          np: 2,
-          cix: 2,
-          bm: 0,
-          ix: 5,
-          mn: "ADBE Vector Group",
-          hd: false,
-        },
-        {
-          ty: "gr",
-          it: [
-            {
-              ind: 0,
-              ty: "sh",
-              ix: 1,
-              ks: {
-                a: 0,
-                k: {
-                  i: [
-                    [0, 0],
-                    [0, 0],
-                  ],
-                  o: [
-                    [0, 0],
-                    [0, 0],
-                  ],
-                  v: [
-                    [-120, -50],
-                    [120, 50],
-                  ],
-                  c: false,
-                },
-                ix: 2,
-              },
-              nm: "Path 1",
-              mn: "ADBE Vector Shape - Group",
-              hd: false,
-            },
-            {
-              ty: "st",
-              c: { a: 0, k: [0.6, 0.6, 0.6, 1], ix: 3 },
-              o: {
-                a: 1,
-                k: [
-                  { t: 10, s: [30], h: 1 },
-                  { t: 70, s: [80], h: 1 },
-                  { t: 130, s: [30], h: 1 },
-                ],
-                ix: 4,
-              },
-              w: { a: 0, k: 2, ix: 5 },
-              lc: 2,
-              lj: 2,
-              bm: 0,
-              nm: "Stroke 1",
-              mn: "ADBE Vector Graphic - Stroke",
-              hd: false,
-            },
-            {
-              ty: "tr",
-              p: { a: 0, k: [0, 0], ix: 2 },
-              a: { a: 0, k: [0, 0], ix: 1 },
-              s: { a: 0, k: [100, 100], ix: 3 },
-              r: { a: 0, k: 0, ix: 6 },
-              o: { a: 0, k: 100, ix: 7 },
-              sk: { a: 0, k: 0, ix: 4 },
-              sa: { a: 0, k: 0, ix: 5 },
-              nm: "Transform",
-            },
-          ],
-          nm: "Edge 1-3",
-          np: 2,
-          cix: 2,
-          bm: 0,
-          ix: 6,
-          mn: "ADBE Vector Group",
-          hd: false,
-        },
-      ],
-      ip: 0,
-      op: 180,
-      st: 0,
-      bm: 0,
-    },
-  ],
-  markers: [],
-};
-
-const LoadingAnimation = ({ message = "Processing your image..." }) => {
-  const defaultOptions = {
-    loop: true,
-    autoplay: true,
-    animationData: animationData,
-    rendererSettings: {
-      preserveAspectRatio: "xMidYMid slice",
     },
   };
 
+  // Define animation variants for connections
+  const connectionVariants = {
+    flow: {
+      pathLength: [0, 1],
+      opacity: [0.3, 0.8, 0.3],
+      transition: {
+        duration: 1.5,
+        repeat: Infinity,
+        ease: "easeInOut",
+      },
+    },
+  };
+
+  const layerColors = [
+    theme.palette.primary.main,
+    theme.palette.secondary.main,
+    theme.palette.info.main,
+  ];
+
+  return (
+    <Box sx={{ width: "100%", maxWidth: 500, mx: "auto", overflow: "hidden" }}>
+      <Box sx={{ p: 2, position: "relative", height: 280 }}>
+        <motion.svg
+          viewBox="0 0 500 250"
+          width="100%"
+          height="100%"
+          preserveAspectRatio="xMidYMid meet"
+        >
+          {/* Input Layer */}
+          {[40, 80, 120, 160, 200].map((y, i) => (
+            <motion.circle
+              key={`input-${i}`}
+              cx="100"
+              cy={y}
+              r="12"
+              fill={layerColors[0]}
+              variants={nodeVariants}
+              animate="pulse"
+              custom={i}
+              transition={{
+                duration: 2,
+                repeat: Infinity,
+                repeatType: "reverse",
+                delay: i * 0.2,
+              }}
+            />
+          ))}
+
+          {/* Hidden Layer */}
+          {[60, 100, 140, 180].map((y, i) => (
+            <motion.circle
+              key={`hidden-${i}`}
+              cx="250"
+              cy={y}
+              r="12"
+              fill={layerColors[1]}
+              variants={nodeVariants}
+              animate="pulse"
+              custom={i}
+              transition={{
+                duration: 2,
+                repeat: Infinity,
+                repeatType: "reverse",
+                delay: i * 0.3 + 0.1,
+              }}
+            />
+          ))}
+
+          {/* Output Layer */}
+          {[80, 120, 160].map((y, i) => (
+            <motion.circle
+              key={`output-${i}`}
+              cx="400"
+              cy={y}
+              r="12"
+              fill={layerColors[2]}
+              variants={nodeVariants}
+              animate="pulse"
+              custom={i}
+              transition={{
+                duration: 2,
+                repeat: Infinity,
+                repeatType: "reverse",
+                delay: i * 0.4 + 0.2,
+              }}
+            />
+          ))}
+
+          {/* Connections from Input to Hidden */}
+          {[40, 80, 120, 160, 200].map((inputY, i) =>
+            [60, 100, 140, 180].map((hiddenY, j) => (
+              <motion.line
+                key={`in-hidden-${i}-${j}`}
+                x1="100"
+                y1={inputY}
+                x2="250"
+                y2={hiddenY}
+                stroke={theme.palette.grey[400]}
+                strokeWidth="1.5"
+                variants={connectionVariants}
+                animate="flow"
+                transition={{
+                  duration: 2,
+                  repeat: Infinity,
+                  delay: (i * 0.1 + j * 0.1) % 1,
+                }}
+                style={{ opacity: 0.3 }}
+              />
+            ))
+          )}
+
+          {/* Connections from Hidden to Output */}
+          {[60, 100, 140, 180].map((hiddenY, i) =>
+            [80, 120, 160].map((outputY, j) => (
+              <motion.line
+                key={`hidden-out-${i}-${j}`}
+                x1="250"
+                y1={hiddenY}
+                x2="400"
+                y2={outputY}
+                stroke={theme.palette.grey[400]}
+                strokeWidth="1.5"
+                variants={connectionVariants}
+                animate="flow"
+                transition={{
+                  duration: 2,
+                  repeat: Infinity,
+                  delay: (i * 0.1 + j * 0.1 + 0.5) % 1,
+                }}
+                style={{ opacity: 0.3 }}
+              />
+            ))
+          )}
+
+          {/* Data flow animation */}
+          <motion.circle
+            cx="100"
+            cy="120"
+            r="5"
+            fill={theme.palette.common.white}
+            filter="drop-shadow(0 0 3px rgba(0,0,0,0.3))"
+            animate={{
+              x: [0, 150, 300],
+              y: [0, 20, -20],
+              scale: [1, 1.2, 1],
+              opacity: [0.8, 1, 0.8],
+            }}
+            transition={{
+              duration: 3,
+              repeat: Infinity,
+              repeatType: "loop",
+              times: [0, 0.5, 1],
+              ease: "easeInOut",
+            }}
+          />
+
+          <motion.circle
+            cx="100"
+            cy="160"
+            r="5"
+            fill={theme.palette.common.white}
+            filter="drop-shadow(0 0 3px rgba(0,0,0,0.3))"
+            animate={{
+              x: [0, 150, 300],
+              y: [0, -30, 0],
+              scale: [1, 1.2, 1],
+              opacity: [0.8, 1, 0.8],
+            }}
+            transition={{
+              duration: 3,
+              repeat: Infinity,
+              repeatType: "loop",
+              times: [0, 0.5, 1],
+              delay: 1,
+              ease: "easeInOut",
+            }}
+          />
+
+          <motion.circle
+            cx="100"
+            cy="80"
+            r="5"
+            fill={theme.palette.common.white}
+            filter="drop-shadow(0 0 3px rgba(0,0,0,0.3))"
+            animate={{
+              x: [0, 150, 300],
+              y: [0, 60, 40],
+              scale: [1, 1.2, 1],
+              opacity: [0.8, 1, 0.8],
+            }}
+            transition={{
+              duration: 3,
+              repeat: Infinity,
+              repeatType: "loop",
+              times: [0, 0.5, 1],
+              delay: 2,
+              ease: "easeInOut",
+            }}
+          />
+        </motion.svg>
+      </Box>
+    </Box>
+  );
+};
+
+const LoadingAnimation = ({
+  message = "Processing your image...",
+  subMessage = "This may take a moment...",
+}) => {
   return (
     <Paper
       elevation={0}
       sx={{
         p: 4,
         textAlign: "center",
-        borderRadius: 2,
-        bgcolor: "transparent",
+        borderRadius: 4,
+        bgcolor: "background.paper",
+        maxWidth: 600,
+        mx: "auto",
+        overflow: "hidden",
+        border: "1px solid",
+        borderColor: "divider",
       }}
+      component={motion.div}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
     >
-      <Box sx={{ maxWidth: 400, mx: "auto" }}>
-        <Lottie options={defaultOptions} height={240} width={300} />
+      <Box sx={{ mb: 4 }}>
+        <NeuralNetworkAnimation />
       </Box>
-      <Typography variant="h6" color="text.primary" sx={{ mt: 2 }}>
-        {message}
+
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          mb: 2,
+        }}
+      >
+        <CircularProgress size={20} thickness={4} sx={{ mr: 2 }} />
+        <Typography
+          variant="h5"
+          component={motion.h5}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3 }}
+          color="text.primary"
+          fontWeight={600}
+        >
+          {message}
+        </Typography>
+      </Box>
+
+      <Typography
+        variant="body2"
+        color="text.secondary"
+        sx={{ maxWidth: 400, mx: "auto" }}
+        component={motion.p}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.5 }}
+      >
+        {subMessage}
       </Typography>
-      <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-        This may take a few moments, please wait...
-      </Typography>
+
+      <Box
+        sx={{
+          mt: 4,
+          height: 4,
+          bgcolor: "grey.100",
+          borderRadius: 2,
+          overflow: "hidden",
+          maxWidth: 400,
+          mx: "auto",
+        }}
+      >
+        <Box
+          component={motion.div}
+          initial={{ x: "-100%" }}
+          animate={{ x: "100%" }}
+          transition={{
+            repeat: Infinity,
+            duration: 1.5,
+            ease: "easeInOut",
+          }}
+          sx={{
+            width: "30%",
+            height: "100%",
+            background:
+              "linear-gradient(90deg, rgba(63,81,181,0.1) 0%, rgba(63,81,181,0.6) 50%, rgba(63,81,181,0.1) 100%)",
+            borderRadius: 2,
+          }}
+        />
+      </Box>
     </Paper>
   );
 };

@@ -15,56 +15,46 @@ import {
   Fade,
   Stack,
   Divider,
+  Container,
+  useTheme,
+  CardHeader,
+  Tooltip,
+  IconButton,
+  Collapse,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
-import { useDropzone } from "react-dropzone";
 import axios from "axios";
-import CloudUploadIcon from "@mui/icons-material/CloudUpload";
-import SettingsIcon from "@mui/icons-material/Settings";
 import SendIcon from "@mui/icons-material/Send";
-import LoadingAnimation from "../components/LoadingAnimation";
+import TuneIcon from "@mui/icons-material/Tune";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
+import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
-// Styled components
-const UploadBox = styled(Box)(
-  ({ theme, isDragActive, isDragReject, imagePreview }) => ({
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: theme.spacing(6),
-    borderWidth: 2,
-    borderRadius: theme.shape.borderRadius,
-    borderColor: isDragReject
-      ? theme.palette.error.main
-      : isDragActive
-      ? theme.palette.primary.main
-      : theme.palette.divider,
-    borderStyle: "dashed",
-    backgroundColor: isDragActive
-      ? theme.palette.action.hover
-      : theme.palette.background.paper,
-    color: theme.palette.text.secondary,
-    outline: "none",
-    transition: "border .24s ease-in-out",
-    cursor: "pointer",
-    backgroundImage: imagePreview ? `url(${imagePreview})` : "none",
-    backgroundSize: "contain",
-    backgroundPosition: "center",
-    backgroundRepeat: "no-repeat",
-    position: "relative",
-    minHeight: 240,
-    "&:hover": {
-      borderColor: theme.palette.primary.main,
-    },
-  })
-);
+import LoadingAnimation from "../components/LoadingAnimation";
+import FileUploader from "../components/FileUploader";
+import { motion } from "framer-motion";
+
+// Styled expand button for settings
+const ExpandMore = styled((props) => {
+  const { expand, ...other } = props;
+  return <IconButton {...other} />;
+})(({ theme, expand }) => ({
+  transform: !expand ? "rotate(0deg)" : "rotate(180deg)",
+  marginLeft: "auto",
+  transition: theme.transitions.create("transform", {
+    duration: theme.transitions.duration.shortest,
+  }),
+}));
+
+const MotionBox = motion(Box);
+const MotionPaper = motion(Paper);
 
 const InferencePage = () => {
   const navigate = useNavigate();
+  const theme = useTheme();
 
   // State for file upload
   const [file, setFile] = useState(null);
-  const [imagePreview, setImagePreview] = useState("");
   const [fileError, setFileError] = useState("");
 
   // State for inference options
@@ -75,46 +65,14 @@ const InferencePage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // Handle file drop
-  const onDrop = useCallback((acceptedFiles) => {
-    setFileError("");
+  // State for settings expansion
+  const [expandedSettings, setExpandedSettings] = useState(true);
 
-    if (acceptedFiles.length === 0) {
-      return;
-    }
-
-    const selectedFile = acceptedFiles[0];
-
-    // Check if file is an image
-    if (!selectedFile.type.startsWith("image/")) {
-      setFileError("Please upload an image file");
-      return;
-    }
-
-    // Check file size (max 10MB)
-    if (selectedFile.size > 10 * 1024 * 1024) {
-      setFileError("File size should be less than 10MB");
-      return;
-    }
-
-    // Set file and create preview
+  // Handle file selection
+  const handleFileSelect = (selectedFile) => {
     setFile(selectedFile);
-    const objectUrl = URL.createObjectURL(selectedFile);
-    setImagePreview(objectUrl);
-
-    // Clean up the preview URL when component unmounts
-    return () => URL.revokeObjectURL(objectUrl);
-  }, []);
-
-  // Configure dropzone
-  const { getRootProps, getInputProps, isDragActive, isDragReject } =
-    useDropzone({
-      onDrop,
-      accept: {
-        "image/*": [".jpeg", ".jpg", ".png"],
-      },
-      maxFiles: 1,
-    });
+    setFileError("");
+  };
 
   // Handle form submission
   const handleSubmit = async (event) => {
@@ -162,88 +120,80 @@ const InferencePage = () => {
     setUseFixedBoxes(event.target.checked);
   };
 
+  // Toggle settings expansion
+  const handleExpandSettings = () => {
+    setExpandedSettings(!expandedSettings);
+  };
+
   return (
-    <Box>
-      <Typography
-        variant="h4"
-        component="h1"
-        gutterBottom
-        align="center"
-        sx={{ mb: 4, fontWeight: 600 }}
+    <Container maxWidth="lg">
+      <MotionBox
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
       >
-        Scene Graph Inference
-      </Typography>
+        <Typography
+          variant="h4"
+          component="h1"
+          align="center"
+          gutterBottom
+          sx={{
+            mb: 1,
+            fontWeight: 700,
+            background: "linear-gradient(135deg, #3f51b5 10%, #5c6bc0 90%)",
+            backgroundClip: "text",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            display: "inline-block",
+          }}
+        >
+          Scene Graph Generator
+        </Typography>
+
+        <Typography
+          variant="subtitle1"
+          color="text.secondary"
+          align="center"
+          sx={{ mb: 5, maxWidth: 700, mx: "auto" }}
+        >
+          Upload an image to analyze objects and their relationships, and
+          generate a structured scene graph representation.
+        </Typography>
+      </MotionBox>
 
       {isLoading ? (
-        <LoadingAnimation message="Generating scene graph..." />
+        <LoadingAnimation
+          message="Generating scene graph..."
+          subMessage="Our model is analyzing your image and identifying objects and relationships. This may take up to 30 seconds."
+        />
       ) : (
         <Grid container spacing={4}>
           {/* Left column - Upload section */}
           <Grid item xs={12} md={7}>
-            <Card
-              elevation={0}
+            <MotionPaper
+              elevation={1}
               sx={{
                 height: "100%",
-                borderRadius: 2,
-                border: "1px solid",
-                borderColor: "divider",
+                borderRadius: 3,
+                overflow: "hidden",
               }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
             >
+              <CardHeader
+                title="Upload Image"
+                subheader="Upload an image to analyze objects and their relationships in the scene"
+                sx={{
+                  bgcolor: "background.default",
+                  borderBottom: "1px solid",
+                  borderColor: "divider",
+                }}
+              />
+
               <CardContent sx={{ p: 3 }}>
-                <Typography variant="h6" gutterBottom>
-                  Upload Image
-                </Typography>
-                <Typography variant="body2" color="text.secondary" paragraph>
-                  Upload an image to analyze objects and their relationships in
-                  the scene.
-                </Typography>
-
-                <Divider sx={{ my: 2 }} />
-
                 <form onSubmit={handleSubmit}>
-                  <UploadBox
-                    {...getRootProps()}
-                    isDragActive={isDragActive}
-                    isDragReject={isDragReject}
-                    imagePreview={imagePreview}
-                  >
-                    <input {...getInputProps()} />
-
-                    {imagePreview ? (
-                      <Box
-                        sx={{
-                          position: "absolute",
-                          bottom: 0,
-                          left: 0,
-                          right: 0,
-                          p: 1,
-                          bgcolor: "rgba(0, 0, 0, 0.5)",
-                          color: "white",
-                          textAlign: "center",
-                        }}
-                      >
-                        <Typography variant="body2">
-                          {file?.name} (
-                          {(file?.size / (1024 * 1024)).toFixed(2)} MB)
-                        </Typography>
-                        <Typography variant="caption">
-                          Click or drag to replace
-                        </Typography>
-                      </Box>
-                    ) : (
-                      <>
-                        <CloudUploadIcon
-                          sx={{ fontSize: 48, mb: 2, color: "primary.main" }}
-                        />
-                        <Typography variant="body1" gutterBottom>
-                          Drag & drop an image here, or click to select
-                        </Typography>
-                        <Typography variant="caption" color="textSecondary">
-                          Supported formats: JPEG, PNG, WebP
-                        </Typography>
-                      </>
-                    )}
-                  </UploadBox>
+                  <FileUploader onFileSelect={handleFileSelect} />
 
                   {fileError && (
                     <Alert severity="error" sx={{ mt: 2 }}>
@@ -261,122 +211,227 @@ const InferencePage = () => {
                       type="submit"
                       disabled={!file || isLoading}
                       endIcon={<SendIcon />}
+                      sx={{
+                        fontWeight: 600,
+                        px: 3,
+                        py: 1.2,
+                      }}
                     >
                       Generate Scene Graph
                     </Button>
                   </Box>
                 </form>
               </CardContent>
-            </Card>
+            </MotionPaper>
           </Grid>
 
           {/* Right column - Settings */}
           <Grid item xs={12} md={5}>
-            <Card
-              elevation={0}
+            <MotionPaper
+              elevation={1}
               sx={{
                 height: "100%",
-                borderRadius: 2,
-                border: "1px solid",
-                borderColor: "divider",
+                borderRadius: 3,
+                overflow: "hidden",
               }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
             >
-              <CardContent sx={{ p: 3 }}>
-                <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-                  <SettingsIcon sx={{ mr: 1, color: "text.secondary" }} />
-                  <Typography variant="h6">Inference Settings</Typography>
-                </Box>
-
-                <Typography variant="body2" color="text.secondary" paragraph>
-                  Adjust parameters to control the scene graph generation
-                  process.
-                </Typography>
-
-                <Divider sx={{ my: 2 }} />
-
-                <Stack spacing={4} sx={{ mt: 3 }}>
-                  {/* Confidence Threshold Slider */}
-                  <Box>
-                    <Typography id="confidence-slider" gutterBottom>
-                      Confidence Threshold: {confidenceThreshold.toFixed(2)}
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      gutterBottom
-                    >
-                      Higher values result in fewer but more confident
-                      predictions.
-                    </Typography>
-                    <Slider
-                      value={confidenceThreshold}
-                      onChange={handleConfidenceChange}
-                      aria-labelledby="confidence-slider"
-                      valueLabelDisplay="auto"
-                      step={0.01}
-                      marks={[
-                        { value: 0, label: "0" },
-                        { value: 0.25, label: "0.25" },
-                        { value: 0.5, label: "0.5" },
-                        { value: 0.75, label: "0.75" },
-                        { value: 1, label: "1" },
-                      ]}
-                      min={0}
-                      max={1}
-                    />
+              <CardHeader
+                title={
+                  <Box sx={{ display: "flex", alignItems: "center" }}>
+                    <TuneIcon sx={{ mr: 1, color: "primary.main" }} />
+                    <Typography variant="h6">Inference Settings</Typography>
                   </Box>
+                }
+                action={
+                  <ExpandMore
+                    expand={expandedSettings}
+                    onClick={handleExpandSettings}
+                    aria-expanded={expandedSettings}
+                    aria-label="show more"
+                  >
+                    <ExpandMoreIcon />
+                  </ExpandMore>
+                }
+                sx={{
+                  bgcolor: "background.default",
+                  borderBottom: "1px solid",
+                  borderColor: "divider",
+                }}
+              />
 
-                  {/* Use Fixed Boxes Switch */}
-                  <Box>
-                    <FormControlLabel
-                      control={
-                        <Switch
-                          checked={useFixedBoxes}
-                          onChange={handleFixedBoxesChange}
-                          name="useFixedBoxes"
-                          color="primary"
+              <Collapse in={expandedSettings} timeout="auto" unmountOnExit>
+                <CardContent sx={{ p: 3 }}>
+                  <Typography variant="body2" color="text.secondary" paragraph>
+                    Adjust parameters to control the scene graph generation
+                    process.
+                  </Typography>
+
+                  <Stack spacing={4} sx={{ mt: 3 }}>
+                    {/* Confidence Threshold Slider */}
+                    <Box>
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", mb: 1 }}
+                      >
+                        <Typography id="confidence-slider" fontWeight={500}>
+                          Confidence Threshold: {confidenceThreshold.toFixed(2)}
+                        </Typography>
+                        <Tooltip title="Higher values result in fewer but more confident predictions. Lower values include more objects and relationships but may be less accurate.">
+                          <IconButton
+                            size="small"
+                            sx={{ ml: 1, color: "text.secondary" }}
+                          >
+                            <HelpOutlineIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </Box>
+
+                      <Slider
+                        value={confidenceThreshold}
+                        onChange={handleConfidenceChange}
+                        aria-labelledby="confidence-slider"
+                        valueLabelDisplay="auto"
+                        step={0.01}
+                        marks={[
+                          { value: 0, label: "0" },
+                          { value: 0.25, label: "0.25" },
+                          { value: 0.5, label: "0.5" },
+                          { value: 0.75, label: "0.75" },
+                          { value: 1, label: "1" },
+                        ]}
+                        min={0}
+                        max={1}
+                        sx={{
+                          "& .MuiSlider-thumb": {
+                            height: 24,
+                            width: 24,
+                            backgroundColor: "#fff",
+                            border: "2px solid currentColor",
+                            "&:focus, &:hover, &.Mui-active, &.Mui-focusVisible":
+                              {
+                                boxShadow: "0 0 0 8px rgba(63, 81, 181, 0.16)",
+                              },
+                          },
+                          "& .MuiSlider-valueLabel": {
+                            backgroundColor: theme.palette.primary.main,
+                          },
+                        }}
+                      />
+
+                      <Box
+                        sx={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          mt: 1,
+                          color: "text.secondary",
+                          fontSize: "0.75rem",
+                        }}
+                      >
+                        <span>More objects & relationships</span>
+                        <span>Higher accuracy</span>
+                      </Box>
+                    </Box>
+
+                    {/* Use Fixed Boxes Switch */}
+                    <Box>
+                      <Box sx={{ display: "flex", alignItems: "center" }}>
+                        <FormControlLabel
+                          control={
+                            <Switch
+                              checked={useFixedBoxes}
+                              onChange={handleFixedBoxesChange}
+                              name="useFixedBoxes"
+                              color="primary"
+                            />
+                          }
+                          label="Use fixed bounding boxes"
                         />
-                      }
-                      label="Use fixed bounding boxes"
-                    />
-                    <Typography variant="body2" color="text.secondary">
-                      When enabled, uses predefined boxes instead of YOLO
-                      detection.
-                    </Typography>
-                  </Box>
+                        <Tooltip title="When enabled, uses predefined boxes instead of dynamic YOLO detection. Useful for debugging or for consistent results.">
+                          <IconButton
+                            size="small"
+                            sx={{ color: "text.secondary" }}
+                          >
+                            <HelpOutlineIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </Box>
+                    </Box>
 
-                  {/* Predefined Paths (for reference, not editable) */}
-                  <Box>
-                    <Typography variant="subtitle2" gutterBottom>
-                      Model Information
-                    </Typography>
-                    <Paper variant="outlined" sx={{ p: 2, bgcolor: "grey.50" }}>
-                      <Typography variant="body2" color="text.secondary">
-                        <strong>Model Path:</strong> app/models/model.pth
+                    {/* Predefined Paths */}
+                    <Box>
+                      <Typography variant="subtitle2" gutterBottom>
+                        Model Information
                       </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        <strong>Vocabulary Path:</strong>{" "}
-                        app/models/vocabulary.json
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        <strong>Output Path:</strong> outputs/{"{job_id}"}
-                      </Typography>
-                    </Paper>
-                  </Box>
-                </Stack>
-              </CardContent>
-            </Card>
+                      <Paper
+                        variant="outlined"
+                        sx={{
+                          p: 2,
+                          bgcolor: "rgba(0, 0, 0, 0.02)",
+                          borderRadius: 2,
+                        }}
+                      >
+                        <Stack spacing={1}>
+                          <Box
+                            sx={{ display: "flex", alignItems: "flex-start" }}
+                          >
+                            <InfoOutlinedIcon
+                              fontSize="small"
+                              sx={{ mr: 1, color: "text.secondary", mt: 0.3 }}
+                            />
+                            <Typography variant="body2" color="text.secondary">
+                              <strong>Model Path:</strong> app/models/model.pth
+                            </Typography>
+                          </Box>
+                          <Box
+                            sx={{ display: "flex", alignItems: "flex-start" }}
+                          >
+                            <InfoOutlinedIcon
+                              fontSize="small"
+                              sx={{ mr: 1, color: "text.secondary", mt: 0.3 }}
+                            />
+                            <Typography variant="body2" color="text.secondary">
+                              <strong>Vocabulary Path:</strong>{" "}
+                              app/models/vocabulary.json
+                            </Typography>
+                          </Box>
+                          <Box
+                            sx={{ display: "flex", alignItems: "flex-start" }}
+                          >
+                            <InfoOutlinedIcon
+                              fontSize="small"
+                              sx={{ mr: 1, color: "text.secondary", mt: 0.3 }}
+                            />
+                            <Typography variant="body2" color="text.secondary">
+                              <strong>Output Path:</strong> outputs/{"{job_id}"}
+                            </Typography>
+                          </Box>
+                        </Stack>
+                      </Paper>
+                    </Box>
+                  </Stack>
+                </CardContent>
+              </Collapse>
+            </MotionPaper>
           </Grid>
         </Grid>
       )}
 
       {/* Error message */}
       <Fade in={!!error}>
-        <Alert severity="error" sx={{ mt: 3 }}>
+        <Alert
+          severity="error"
+          sx={{
+            mt: 3,
+            borderRadius: 2,
+            boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
+          }}
+        >
           {error}
         </Alert>
       </Fade>
-    </Box>
+    </Container>
   );
 };
 
