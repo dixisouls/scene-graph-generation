@@ -236,8 +236,7 @@ const Footer = () => {
           <Grid container justifyContent="space-between" alignItems="center">
             <Grid item xs={12} sm={6}>
               <Typography variant="body2" color="text.secondary">
-                © {new Date().getFullYear()} Scene Graph Generator. All rights
-                reserved.
+                © {new Date().getFullYear()} Scene Graph Generator.
               </Typography>
             </Grid>
             <Grid
@@ -252,11 +251,11 @@ const Footer = () => {
               <Typography variant="body2" color="text.secondary">
                 Created by{" "}
                 <Link
-                  href="https://github.com/dixisouls"
+                  href="https://dixisouls.github.io/portfolio/"
                   color="primary.main"
                   underline="hover"
                 >
-                  dixisouls
+                  Divya Panchal
                 </Link>
               </Typography>
             </Grid>

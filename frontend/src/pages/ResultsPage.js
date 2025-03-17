@@ -51,8 +51,12 @@ const ImageWithFallback = ({ src, alt, ...props }) => {
   const [loading, setLoading] = useState(true);
   const theme = useTheme();
 
+  // Determine if this is a data URL (base64)
+  const isDataUrl =
+    src && (src.startsWith("data:image/") || src.startsWith("blob:"));
+
   const handleError = () => {
-    console.error(`Failed to load image: ${src}`);
+    console.error(`Failed to load image: ${isDataUrl ? "data URL" : src}`);
     setError(true);
     setLoading(false);
   };
@@ -88,7 +92,7 @@ const ImageWithFallback = ({ src, alt, ...props }) => {
           align="center"
           sx={{ mb: 2 }}
         >
-          {src}
+          {isDataUrl ? "Base64 image data" : src}
         </Typography>
         <Button
           variant="outlined"
@@ -450,67 +454,105 @@ const ResultsPage = () => {
 
     const fetchResults = async () => {
       try {
-        // Get the short ID (first part of UUID) to construct filenames
-        const shortId = jobId.split("-")[0];
+        setLoading(true);
 
-        // Construct image URLs with the correct pattern
-        const annotated_image_url = `/outputs/${jobId}/${shortId}_annotated.png`;
-        const graph_url = `/outputs/${jobId}/${shortId}_graph.png`;
+        // Check if this is a temporary job ID from remote API (stored in sessionStorage)
+        const storedResultData = sessionStorage.getItem(
+          `scene-graph-result-${jobId}`
+        );
 
-        console.log("Attempting to load:");
-        console.log(" - Annotated image:", annotated_image_url);
-        console.log(" - Graph:", graph_url);
+        if (storedResultData) {
+          // We have data from the remote API in session storage
+          const parsedData = JSON.parse(storedResultData);
 
-        // Try to fetch job data if API endpoint is implemented
-        let apiData = {};
-        try {
-          const response = await axios.get(
-            `/api/generate-scene-graph/${jobId}`
-          );
-          apiData = response.data;
-        } catch (apiErr) {
-          console.log("API endpoint not available or returned error:", apiErr);
-          console.log("Using default data structure");
-          // Fallback to default data with correct image URLs
-          apiData = {
-            job_id: jobId,
-            objects: [
-              {
-                label: "person",
-                score: 0.91,
-                label_id: 1,
-                bbox: [0.3, 0.4, 0.1, 0.3],
-              },
-              {
-                label: "bicycle",
-                score: 0.87,
-                label_id: 2,
-                bbox: [0.5, 0.5, 0.2, 0.2],
-              },
-            ],
-            relationships: [
-              {
-                subject: "person",
-                predicate: "riding",
-                object: "bicycle",
-                score: 0.82,
-                subject_id: 0,
-                object_id: 1,
-                predicate_id: 5,
-              },
-            ],
+          // Log the data for debugging
+          console.log("Stored result data keys:", Object.keys(parsedData));
+
+          // With the new approach, we're storing Blob URLs directly instead of base64 data
+          const annotated_image_url = parsedData.annotated_image_url || "";
+          const graph_url = parsedData.graph_url || "";
+
+          console.log("Image URLs available?", {
+            annotated: !!annotated_image_url,
+            graph: !!graph_url,
+          });
+
+          // Set results with the URLs already stored in sessionStorage
+          setResults({
+            ...parsedData,
+            // These properties should already exist in parsedData from the new approach
+            annotated_image_url,
+            graph_url,
+          });
+
+          setLoading(false);
+        } else {
+          // Try the original method for local backend
+          // Get the short ID (first part of UUID) to construct filenames
+          const shortId = jobId.split("-")[0];
+
+          // Construct image URLs with the correct pattern
+          const annotated_image_url = `/outputs/${jobId}/${shortId}_annotated.png`;
+          const graph_url = `/outputs/${jobId}/${shortId}_graph.png`;
+
+          console.log("Attempting to load:");
+          console.log(" - Annotated image:", annotated_image_url);
+          console.log(" - Graph:", graph_url);
+
+          // Try to fetch job data if API endpoint is implemented
+          let apiData = {};
+          try {
+            const response = await axios.get(
+              `/api/generate-scene-graph/${jobId}`
+            );
+            apiData = response.data;
+          } catch (apiErr) {
+            console.log(
+              "API endpoint not available or returned error:",
+              apiErr
+            );
+            console.log("Using default data structure");
+            // Fallback to default data with correct image URLs
+            apiData = {
+              job_id: jobId,
+              objects: [
+                {
+                  label: "person",
+                  score: 0.91,
+                  label_id: 1,
+                  bbox: [0.3, 0.4, 0.1, 0.3],
+                },
+                {
+                  label: "bicycle",
+                  score: 0.87,
+                  label_id: 2,
+                  bbox: [0.5, 0.5, 0.2, 0.2],
+                },
+              ],
+              relationships: [
+                {
+                  subject: "person",
+                  predicate: "riding",
+                  object: "bicycle",
+                  score: 0.82,
+                  subject_id: 0,
+                  object_id: 1,
+                  predicate_id: 5,
+                },
+              ],
+            };
+          }
+
+          // Add image URLs to the data object
+          const resultData = {
+            ...apiData,
+            annotated_image_url,
+            graph_url,
           };
+
+          setResults(resultData);
+          setLoading(false);
         }
-
-        // Add image URLs to the data object
-        const resultData = {
-          ...apiData,
-          annotated_image_url,
-          graph_url,
-        };
-
-        setResults(resultData);
-        setLoading(false);
       } catch (err) {
         console.error("Error fetching results:", err);
         setError("Failed to fetch scene graph results");
@@ -710,12 +752,6 @@ const ResultsPage = () => {
             count={results?.relationships?.length || 0}
             icon={<AccountTreeIcon />}
             color="secondary"
-          />
-          <StatusChip
-            label="Job ID"
-            count={jobId.split("-")[0]}
-            icon={<DoneIcon />}
-            color="success"
           />
         </Box>
 

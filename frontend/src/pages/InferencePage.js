@@ -34,6 +34,10 @@ import LoadingAnimation from "../components/LoadingAnimation";
 import FileUploader from "../components/FileUploader";
 import { motion } from "framer-motion";
 
+// Remote API endpoint
+const REMOTE_API_ENDPOINT =
+  "https://dixisouls-scene-graph-generator.hf.space/generate";
+
 // Styled expand button for settings
 const ExpandMore = styled((props) => {
   const { expand, ...other } = props;
@@ -87,24 +91,111 @@ const InferencePage = () => {
     setError("");
 
     try {
-      // Create form data
+      // Create form data for remote API
       const formData = new FormData();
       formData.append("image", file);
       formData.append("confidence_threshold", confidenceThreshold);
       formData.append("use_fixed_boxes", useFixedBoxes);
 
-      // Make API call
-      const response = await axios.post("/api/generate-scene-graph", formData, {
+      // Make API call to remote endpoint
+      console.log("Sending request to:", REMOTE_API_ENDPOINT);
+      const response = await axios.post(REMOTE_API_ENDPOINT, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
       });
 
-      // Navigate to results page with the job ID
-      navigate(`/results/${response.data.job_id}`);
+      // Log the response structure for debugging
+      console.log("API Response structure:", Object.keys(response.data));
+
+      // Generate a temporary job ID for this session
+      const tempJobId = `temp-${Date.now()}`;
+
+      // Check if the response contains the expected data
+      if (!response.data) {
+        throw new Error("No data received from the API");
+      }
+
+      // Create Blob URLs for the base64 images instead of storing the raw base64 data
+      const annotatedImageBase64 =
+        response.data.annotated_image || response.data.annotated_image_base64;
+      const graphImageBase64 =
+        response.data.graph_image || response.data.graph_image_base64;
+
+      // Create Blobs and URLs from the base64 data
+      let annotatedImageUrl = "";
+      let graphImageUrl = "";
+
+      if (annotatedImageBase64) {
+        const annotatedBlob = base64ToBlob(annotatedImageBase64, "image/png");
+        annotatedImageUrl = URL.createObjectURL(annotatedBlob);
+      }
+
+      if (graphImageBase64) {
+        const graphBlob = base64ToBlob(graphImageBase64, "image/png");
+        graphImageUrl = URL.createObjectURL(graphBlob);
+      }
+
+      // Store only the metadata and Blob URLs (much smaller) in sessionStorage
+      const resultData = {
+        job_id: tempJobId,
+        objects: response.data.objects || [],
+        relationships: response.data.relationships || [],
+        annotated_image_url: annotatedImageUrl,
+        graph_url: graphImageUrl,
+      };
+
+      // Helper function to convert base64 to Blob
+      function base64ToBlob(base64, mimeType) {
+        const byteCharacters = atob(base64);
+        const byteArrays = [];
+
+        for (let offset = 0; offset < byteCharacters.length; offset += 512) {
+          const slice = byteCharacters.slice(offset, offset + 512);
+
+          const byteNumbers = new Array(slice.length);
+          for (let i = 0; i < slice.length; i++) {
+            byteNumbers[i] = slice.charCodeAt(i);
+          }
+
+          const byteArray = new Uint8Array(byteNumbers);
+          byteArrays.push(byteArray);
+        }
+
+        return new Blob(byteArrays, { type: mimeType });
+      }
+
+      sessionStorage.setItem(
+        `scene-graph-result-${tempJobId}`,
+        JSON.stringify(resultData)
+      );
+
+      // Navigate to results page with the temporary job ID
+      navigate(`/results/${tempJobId}`);
     } catch (err) {
       console.error("Error submitting form:", err);
-      setError(err.response?.data?.detail || "An unexpected error occurred");
+      // Detailed error logging
+      if (err.response) {
+        // The request was made and the server responded with a status code
+        console.error("Response error data:", err.response.data);
+        console.error("Response status:", err.response.status);
+        console.error("Response headers:", err.response.headers);
+      } else if (err.request) {
+        // The request was made but no response was received
+        console.error(
+          "Request was made but no response received:",
+          err.request
+        );
+      } else {
+        // Something happened in setting up the request
+        console.error("Error message:", err.message);
+      }
+
+      setError(
+        err.response?.data?.detail ||
+          err.message ||
+          "An error occurred while processing your request. Please try again."
+      );
     } finally {
       setIsLoading(false);
     }
@@ -361,6 +452,12 @@ const InferencePage = () => {
                         </Tooltip>
                       </Box>
                     </Box>
+
+                    {/* Remote API notice */}
+                    <Alert severity="info" sx={{ mt: 2 }}>
+                      This application uses a remote API hosted on Hugging Face
+                      Spaces for inference.
+                    </Alert>
                   </Stack>
                 </CardContent>
               </Collapse>
