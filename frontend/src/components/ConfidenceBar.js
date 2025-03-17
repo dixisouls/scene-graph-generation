@@ -161,33 +161,7 @@ const ConfidenceBar = ({ label, value, index = 0, showValueText = true }) => {
             value={progress}
             value-text={`${Math.round(progress)}%`}
           />
-          <Box
-            component={motion.div}
-            initial={{ opacity: 0, scale: 0 }}
-            animate={{
-              opacity: progress > 0 ? 1 : 0,
-              scale: progress > 0 ? 1 : 0,
-            }}
-            transition={{ delay: 0.3 + index * 0.05, duration: 0.3 }}
-            sx={{
-              width: 12,
-              height: 12,
-              borderRadius: "50%",
-              bgcolor:
-                progress > 70
-                  ? "success.main"
-                  : progress > 30
-                  ? "warning.main"
-                  : "error.main",
-              position: "absolute",
-              top: "50%",
-              left: `${progress}%`,
-              transform: "translate(-50%, -50%)",
-              boxShadow: "0 0 6px rgba(0,0,0,0.2)",
-              transition: "left 0.3s ease-out",
-              zIndex: 2,
-            }}
-          />
+          {/* Circle indicator removed as requested */}
         </Box>
       </Box>
     </AnimatedBox>

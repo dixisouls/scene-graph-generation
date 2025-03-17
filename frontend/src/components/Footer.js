@@ -176,24 +176,7 @@ const Footer = () => {
                       Documentation
                     </Link>
                   </Box>
-                  <Box component="li" sx={{ mb: 1 }}>
-                    <Link
-                      href="https://github.com/dixisouls/scene-graph-generation/issues"
-                      target="_blank"
-                      color="text.secondary"
-                      sx={{
-                        textDecoration: "none",
-                        "&:hover": { color: "primary.main" },
-                        display: "flex",
-                        alignItems: "center",
-                      }}
-                    >
-                      <ArrowForwardIcon
-                        sx={{ fontSize: 14, mr: 0.5, opacity: 0.7 }}
-                      />
-                      Report Issues
-                    </Link>
-                  </Box>
+                  {/* Removed "Report Issues" link as requested */}
                 </Box>
               </MotionBox>
             </Grid>

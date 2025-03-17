@@ -62,7 +62,7 @@ const InferencePage = () => {
   const [fileError, setFileError] = useState("");
 
   // State for inference options
-  const [confidenceThreshold, setConfidenceThreshold] = useState(0.5);
+  const [confidenceThreshold, setConfidenceThreshold] = useState(0.1);
   const [useFixedBoxes, setUseFixedBoxes] = useState(false);
 
   // State for API call
