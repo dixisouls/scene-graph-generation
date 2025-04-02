@@ -234,7 +234,7 @@ const Footer = () => {
               <Typography variant="body2" color="text.secondary">
                 Created by{" "}
                 <Link
-                  href="https://dixisouls.github.io/portfolio/"
+                  href="https://divyapanchal.com/"
                   color="primary.main"
                   underline="hover"
                 >
